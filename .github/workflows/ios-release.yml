@@ -323,6 +323,22 @@ jobs:
           export RUST_BACKTRACE=1
           echo "CI mode enabled - Tauri should skip dev server connection"
           echo "Environment variables: CI=$CI, TAURI_BUILD=$TAURI_BUILD"
+          
+          # Create server address file that Tauri's xcode-script expects
+          # This prevents the "failed to read missing addr file" error
+          # Tauri checks this file to see if dev server is running - in CI we create a dummy one
+          SERVER_ADDR_FILE="${TMPDIR}/me.hominio.app-server-addr"
+          if [ -z "$TMPDIR" ]; then
+            # Fallback to common temp directories
+            SERVER_ADDR_FILE="/tmp/me.hominio.app-server-addr"
+          fi
+          echo "http://localhost:5173" > "$SERVER_ADDR_FILE"
+          echo "✅ Created server address file: $SERVER_ADDR_FILE"
+          
+          # Also create in /var/folders/*/T/ directories (macOS temp pattern)
+          find /var/folders -type d -name "T" 2>/dev/null | head -5 | while read T_DIR; do
+            echo "http://localhost:5173" > "${T_DIR}/me.hominio.app-server-addr" 2>/dev/null && echo "✅ Created: ${T_DIR}/me.hominio.app-server-addr" || true
+          done
 
           # Find the provisioning profile UUID
           PROFILE_FILE=$(ls ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision 2>/dev/null | head -1)
