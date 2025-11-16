@@ -58,37 +58,48 @@ jobs:
       - name: Build frontend
         run: bun run build
 
-      - name: List available destinations
-        run: |
-          cd src-tauri/gen/apple
-          xcodebuild -workspace app.xcodeproj/project.xcworkspace \
-            -scheme app_iOS \
-            -showdestinations || true
-
       - name: Build iOS app
         env:
           APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM }}
         run: |
+          # Check available SDKs
+          echo "Available SDKs:"
+          xcodebuild -showsdks
+          
+          # Use Tauri's build command which handles Rust compilation
+          # The issue is iOS SDK version - let's use the SDK that's actually available
           cd src-tauri/gen/apple
-          # Get the first available iOS destination
-          DESTINATION=$(xcodebuild -workspace app.xcodeproj/project.xcworkspace \
-            -scheme app_iOS \
-            -showdestinations 2>/dev/null | \
-            grep -i "platform:iOS" | \
-            grep -v "error:" | \
-            head -1 | \
-            sed 's/.*id=\([^,]*\).*/\1/' || echo "generic/platform=iOS")
           
-          echo "Using destination: $DESTINATION"
+          # Find available iOS SDK version
+          IOS_SDK=$(xcodebuild -showsdks | grep -i "iphoneos" | head -1 | awk '{print $NF}' || echo "iphoneos")
+          echo "Using iOS SDK: $IOS_SDK"
           
-          # Build with the found destination
+          # Build with explicit SDK and destination
           xcodebuild -allowProvisioningUpdates \
             -workspace app.xcodeproj/project.xcworkspace \
             -scheme app_iOS \
-            -sdk iphoneos \
+            -sdk "$IOS_SDK" \
             -configuration release \
-            -destination "$DESTINATION" \
-            build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+            -destination 'generic/platform=iOS' \
+            archive \
+            -archivePath build/app.xcarchive || {
+              echo "Archive failed, trying build instead..."
+              xcodebuild -allowProvisioningUpdates \
+                -workspace app.xcodeproj/project.xcworkspace \
+                -scheme app_iOS \
+                -sdk "$IOS_SDK" \
+                -configuration release \
+                build
+            }
+          
+          # Export IPA if archive succeeded
+          if [ -d "build/app.xcarchive" ]; then
+            xcodebuild -exportArchive \
+              -archivePath build/app.xcarchive \
+              -exportPath build \
+              -exportOptionsPlist ExportOptions.plist \
+              -allowProvisioningUpdates
+          fi
         working-directory: ${{ github.workspace }}
 
       - name: Find IPA file
