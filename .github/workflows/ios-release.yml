@@ -239,10 +239,10 @@ jobs:
           export CI=true
           export TAURI_BUILD=1
           export RUST_BACKTRACE=1
-          
+
           echo "CI mode enabled - Tauri should skip dev server connection"
           echo "Environment variables: CI=$CI, TAURI_BUILD=$TAURI_BUILD"
-          
+
           # Use Tauri CLI to build iOS app - it handles CI mode detection better
           # This will build the IPA directly without manual xcodebuild steps
           cd ${{ github.workspace }}
