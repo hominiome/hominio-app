@@ -230,10 +230,10 @@ jobs:
       - name: Configure Xcode project for manual signing
         run: |
           cd src-tauri/gen/apple
-          
+
           # Find the provisioning profile UUID
           PROFILE_FILE=$(ls ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision 2>/dev/null | head -1)
-          
+
           if [ -n "$PROFILE_FILE" ] && [ -f "$PROFILE_FILE" ]; then
             PROFILE_UUID=$(basename "$PROFILE_FILE" .mobileprovision)
             echo "Found provisioning profile UUID: $PROFILE_UUID"
@@ -285,10 +285,10 @@ jobs:
           export CI=true
           export TAURI_BUILD=1
           export RUST_BACKTRACE=1
-          
+
           echo "CI mode enabled - Tauri should skip dev server connection"
           echo "Environment variables: CI=$CI, TAURI_BUILD=$TAURI_BUILD"
-          
+
           # Use Tauri CLI to build iOS app - it will respect the manual signing settings
           # configured in project.yml and use the imported certificates/profiles
           cd ${{ github.workspace }}
@@ -304,12 +304,12 @@ jobs:
           # Tauri ios build outputs IPA in src-tauri/gen/apple/build/arm64/APPNAME.ipa
           # Search in multiple possible locations
           IPA_PATH=$(find src-tauri/gen/apple/build -name "*.ipa" -type f 2>/dev/null | head -1)
-          
+
           if [ -z "$IPA_PATH" ]; then
             # Try alternative locations
             IPA_PATH=$(find src-tauri/gen/apple -name "*.ipa" -type f 2>/dev/null | head -1)
           fi
-          
+
           if [ -z "$IPA_PATH" ]; then
             echo "Error: IPA file not found"
             echo "Searching in common locations:"
@@ -319,7 +319,7 @@ jobs:
             ls -la src-tauri/gen/apple/build/ 2>/dev/null || echo "Build directory not found"
             exit 1
           fi
-          
+
           echo "ipa_path=$IPA_PATH" >> $GITHUB_OUTPUT
           echo "Found IPA: $IPA_PATH"
           ls -lh "$IPA_PATH"
