@@ -254,10 +254,10 @@ jobs:
       - name: Configure Xcode project for manual signing
         run: |
           cd src-tauri/gen/apple
-          
+
           # Find the provisioning profile UUID
           PROFILE_FILE=$(ls ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision 2>/dev/null | head -1)
-          
+
           if [ -n "$PROFILE_FILE" ] && [ -f "$PROFILE_FILE" ]; then
             PROFILE_UUID=$(basename "$PROFILE_FILE" .mobileprovision)
             echo "Found provisioning profile UUID: $PROFILE_UUID"
