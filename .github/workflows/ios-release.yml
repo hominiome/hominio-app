@@ -87,7 +87,26 @@ jobs:
 
           # Import provisioning profile
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          echo "${{ secrets.IOS_PROVISIONING_PROFILE }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+          PROFILE_PATH=~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+          echo "${{ secrets.IOS_PROVISIONING_PROFILE }}" | base64 --decode > "$PROFILE_PATH"
+
+          # Decode and extract UUID from the profile
+          PROFILE_XML=$(security cms -D -i "$PROFILE_PATH" 2>/dev/null || cat "$PROFILE_PATH")
+          PROFILE_UUID=$(echo "$PROFILE_XML" | grep -aA1 "<key>UUID</key>" | grep -o "<string>[-A-Z0-9]\{36\}</string>" | sed 's/<string>\(.*\)<\/string>/\1/' | head -1)
+
+          # Fallback: try direct grep if UUID extraction failed
+          if [ -z "$PROFILE_UUID" ]; then
+            PROFILE_UUID=$(grep -ao "[-A-Z0-9]\{36\}" "$PROFILE_PATH" | head -1)
+          fi
+
+          if [ -n "$PROFILE_UUID" ]; then
+            # Rename profile to match UUID (Xcode expects this)
+            mv "$PROFILE_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
+            echo "Imported provisioning profile with UUID: $PROFILE_UUID"
+          else
+            echo "Warning: Could not extract UUID from provisioning profile"
+            echo "Profile will be used as-is"
+          fi
 
           # List imported profiles
           ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
@@ -106,14 +125,50 @@ jobs:
           # Build with code signing
           # If certificates/profiles are imported, use manual signing
           # Otherwise, try automatic signing with -allowProvisioningUpdates
-          if [ -f ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision ]; then
+          PROFILE_FILE=$(ls ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision 2>/dev/null | head -1)
+
+          if [ -n "$PROFILE_FILE" ] && [ -f "$PROFILE_FILE" ]; then
             echo "Using manual code signing with imported certificates..."
-            PROFILE_UUID=$(grep -aA1 UUID ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | grep -o "[-A-Z0-9]\{36\}" | head -1)
-            echo "Found provisioning profile UUID: $PROFILE_UUID"
+            echo "Found provisioning profile: $PROFILE_FILE"
+            
+            # Extract UUID from the profile file (it should be named with UUID, but extract to be sure)
+            PROFILE_XML=$(security cms -D -i "$PROFILE_FILE" 2>/dev/null || cat "$PROFILE_FILE")
+            PROFILE_UUID=$(echo "$PROFILE_XML" | grep -aA1 "<key>UUID</key>" | grep -o "<string>[-A-Z0-9]\{36\}</string>" | sed 's/<string>\(.*\)<\/string>/\1/' | head -1)
+            
+            # Fallback: try direct grep if UUID extraction failed
+            if [ -z "$PROFILE_UUID" ]; then
+              PROFILE_UUID=$(grep -ao "[-A-Z0-9]\{36\}" "$PROFILE_FILE" | head -1)
+            fi
+            
+            # Fallback: extract from filename if it's named with UUID
+            if [ -z "$PROFILE_UUID" ]; then
+              PROFILE_UUID=$(basename "$PROFILE_FILE" .mobileprovision)
+            fi
+            
+            if [ -z "$PROFILE_UUID" ]; then
+              echo "Error: Could not extract provisioning profile UUID"
+              echo "Profile file: $PROFILE_FILE"
+              echo "Profile content preview:"
+              head -20 "$PROFILE_FILE"
+              exit 1
+            fi
+            
+            echo "Using provisioning profile UUID: $PROFILE_UUID"
+            
+            # Verify profile bundle ID matches
+            PROFILE_BUNDLE_ID=$(echo "$PROFILE_XML" | grep -aA1 "<key>application-identifier</key>" | grep -o "<string>.*</string>" | sed 's/<string>\(.*\)<\/string>/\1/' | head -1 | cut -d. -f2-)
+            EXPECTED_BUNDLE_ID="me.hominio.app"
+            echo "Profile bundle ID: $PROFILE_BUNDLE_ID"
+            echo "Expected bundle ID: $EXPECTED_BUNDLE_ID"
+            
+            if [ "$PROFILE_BUNDLE_ID" != "$EXPECTED_BUNDLE_ID" ]; then
+              echo "Warning: Profile bundle ID ($PROFILE_BUNDLE_ID) doesn't match expected ($EXPECTED_BUNDLE_ID)"
+            fi
             
             # List available certificates
             security find-identity -v -p codesigning
             
+            # Use UUID for PROVISIONING_PROFILE (Xcode expects UUID, not path)
             xcodebuild \
               -workspace app.xcodeproj/project.xcworkspace \
               -scheme app_iOS \
