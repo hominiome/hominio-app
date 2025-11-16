@@ -1,3 +1,10 @@
+## [0.1.18](https://github.com/hominiome/hominio-app/compare/v0.1.17...v0.1.18) (2025-11-16)
+
+
+### Bug Fixes
+
+* improve iOS code signing setup and verification ([4cc65d6](https://github.com/hominiome/hominio-app/commit/4cc65d6b48714fa6b8c162d0e3dd197c01658d4b))
+
 ## [0.1.17](https://github.com/hominiome/hominio-app/compare/v0.1.16...v0.1.17) (2025-11-16)
 
 
