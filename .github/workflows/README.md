@@ -25,12 +25,42 @@ Go to: **Settings → Secrets and variables → Actions**
 
 ## Add to GitHub Secrets
 
-Add these four secrets:
+### Required Secrets (for TestFlight upload):
 
 - `APPSTORE_CONNECT_API_KEY` - Contents of the downloaded `.p8` file (the entire file content)
 - `APPSTORE_CONNECT_API_KEY_ID` - The Key ID (e.g., `ABC123DEF4`)
 - `APPSTORE_CONNECT_ISSUER_ID` - The Issuer ID (e.g., `12345678-1234-1234-1234-123456789012`)
 - `APPLE_DEVELOPMENT_TEAM` - Your Apple Developer Team ID (e.g., `2P6VCHVJWB`)
+
+### Optional Secrets (for code signing - recommended for CI/CD):
+
+If you want to avoid manual Apple ID authentication in CI, you can provide certificates and provisioning profiles:
+
+1. **Create a Distribution Certificate:**
+   - Go to [Apple Developer Portal](https://developer.apple.com/account/resources/certificates/list)
+   - Create an "Apple Distribution" certificate
+   - Download and export as `.p12` file with a password
+
+2. **Create an App Store Provisioning Profile:**
+   - Go to [Apple Developer Portal](https://developer.apple.com/account/resources/profiles/list)
+   - Create an "App Store" provisioning profile for `me.hominio.app`
+   - Download the `.mobileprovision` file
+
+3. **Encode and add as secrets:**
+   ```bash
+   # Encode certificate
+   base64 -i certificate.p12 | pbcopy
+   # Add as secret: IOS_DISTRIBUTION_CERTIFICATE
+   
+   # Encode provisioning profile  
+   base64 -i profile.mobileprovision | pbcopy
+   # Add as secret: IOS_PROVISIONING_PROFILE
+   
+   # Add certificate password
+   # Add as secret: IOS_DISTRIBUTION_CERTIFICATE_PASSWORD
+   ```
+
+**Note:** If you don't provide certificates/profiles, the workflow will try automatic signing, but this requires Xcode to be authenticated with an Apple ID (not available in CI). Providing certificates/profiles is the recommended approach for reliable CI/CD.
 
 ## Workflows
 

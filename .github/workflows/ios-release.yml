@@ -64,13 +64,75 @@ jobs:
           echo "${{ secrets.APPSTORE_CONNECT_API_KEY }}" > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}.p8
 
-      - name: Build iOS app with Tauri
+      - name: Import code signing certificates and profiles
+        if: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE != '' && secrets.IOS_PROVISIONING_PROFILE != '' }}
+        run: |
+          # Create a temporary keychain for code signing
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+
+          # Import distribution certificate (.p12)
+          echo "${{ secrets.IOS_DISTRIBUTION_CERTIFICATE }}" | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign || true
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain || true
+
+          # Import provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "${{ secrets.IOS_PROVISIONING_PROFILE }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+
+          # List imported profiles
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
+        working-directory: ${{ github.workspace }}
+
+      - name: Build iOS app
         env:
           APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM }}
         run: |
-          # Use Tauri's build command which handles the build process
-          # Tauri will call xcodebuild with proper settings
-          bun run tauri:ios:build
+          cd src-tauri/gen/apple
+          
+          # Find available iOS SDK version
+          IOS_SDK=$(xcodebuild -showsdks | grep -i "iphoneos" | head -1 | awk '{print $NF}' || echo "iphoneos")
+          echo "Using iOS SDK: $IOS_SDK"
+
+          # Build with code signing
+          # If certificates/profiles are imported, use manual signing
+          # Otherwise, try automatic signing with -allowProvisioningUpdates
+          if [ -f ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision ]; then
+            echo "Using manual code signing with imported certificates..."
+            PROFILE_UUID=$(grep -aA1 UUID ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | grep -o "[-A-Z0-9]\{36\}")
+            xcodebuild \
+              -workspace app.xcodeproj/project.xcworkspace \
+              -scheme app_iOS \
+              -sdk "$IOS_SDK" \
+              -configuration release \
+              -destination 'generic/platform=iOS' \
+              CODE_SIGN_STYLE=Manual \
+              CODE_SIGN_IDENTITY="Apple Distribution" \
+              DEVELOPMENT_TEAM="${{ secrets.APPLE_DEVELOPMENT_TEAM }}" \
+              PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
+              archive \
+              -archivePath build/app.xcarchive
+          else
+            echo "Using automatic code signing..."
+            xcodebuild -allowProvisioningUpdates \
+              -workspace app.xcodeproj/project.xcworkspace \
+              -scheme app_iOS \
+              -sdk "$IOS_SDK" \
+              -configuration release \
+              -destination 'generic/platform=iOS' \
+              CODE_SIGN_STYLE=Automatic \
+              DEVELOPMENT_TEAM="${{ secrets.APPLE_DEVELOPMENT_TEAM }}" \
+              archive \
+              -archivePath build/app.xcarchive
+          fi
+
+          # Export IPA
+          xcodebuild -exportArchive \
+            -archivePath build/app.xcarchive \
+            -exportPath build \
+            -exportOptionsPlist ExportOptions.plist
         working-directory: ${{ github.workspace }}
 
       - name: Find IPA file
