@@ -1,3 +1,10 @@
+## [0.1.20](https://github.com/hominiome/hominio-app/compare/v0.1.19...v0.1.20) (2025-11-16)
+
+
+### Bug Fixes
+
+* use xcodebuild directly and fix pip install issue ([2cd1277](https://github.com/hominiome/hominio-app/commit/2cd127707d11f91ed794e7ed298b77df9b8c2ef6))
+
 ## [0.1.19](https://github.com/hominiome/hominio-app/compare/v0.1.18...v0.1.19) (2025-11-16)
 
 
