@@ -35,7 +35,7 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: '16.0'
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -58,29 +58,37 @@ jobs:
       - name: Build frontend
         run: bun run build
 
+      - name: List available destinations
+        run: |
+          cd src-tauri/gen/apple
+          xcodebuild -workspace app.xcodeproj/project.xcworkspace \
+            -scheme app_iOS \
+            -showdestinations || true
+
       - name: Build iOS app
         env:
           APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM }}
         run: |
-          # Use Tauri to build, but we need to ensure destination is available
-          # Tauri's build command will handle Rust compilation and Xcode setup
-          bun run tauri:ios:build || {
-            echo "Tauri build failed, trying direct xcodebuild approach..."
-            cd src-tauri/gen/apple
-            # List available destinations
-            xcodebuild -workspace app.xcodeproj/project.xcworkspace \
-              -scheme app_iOS \
-              -showdestinations
-            
-            # Build with explicit destination
-            xcodebuild -allowProvisioningUpdates \
-              -workspace app.xcodeproj/project.xcworkspace \
-              -scheme app_iOS \
-              -sdk iphoneos \
-              -configuration release \
-              -destination 'generic/platform=iOS' \
-              build
-          }
+          cd src-tauri/gen/apple
+          # Get the first available iOS destination
+          DESTINATION=$(xcodebuild -workspace app.xcodeproj/project.xcworkspace \
+            -scheme app_iOS \
+            -showdestinations 2>/dev/null | \
+            grep -i "platform:iOS" | \
+            grep -v "error:" | \
+            head -1 | \
+            sed 's/.*id=\([^,]*\).*/\1/' || echo "generic/platform=iOS")
+          
+          echo "Using destination: $DESTINATION"
+          
+          # Build with the found destination
+          xcodebuild -allowProvisioningUpdates \
+            -workspace app.xcodeproj/project.xcworkspace \
+            -scheme app_iOS \
+            -sdk iphoneos \
+            -configuration release \
+            -destination "$DESTINATION" \
+            build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
         working-directory: ${{ github.workspace }}
 
       - name: Find IPA file
