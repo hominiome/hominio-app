@@ -1,3 +1,10 @@
+## [0.1.16](https://github.com/hominiome/hominio-app/compare/v0.1.15...v0.1.16) (2025-11-16)
+
+
+### Bug Fixes
+
+* install PyYAML before updating project.yml ([b56f4cc](https://github.com/hominiome/hominio-app/commit/b56f4cc100e537b6a811c7c8d111507b2b728bb1))
+
 ## [0.1.15](https://github.com/hominiome/hominio-app/compare/v0.1.14...v0.1.15) (2025-11-16)
 
 
