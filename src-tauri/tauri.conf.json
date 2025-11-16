@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "hominio-app",
+  "productName": "Hominio",
   "version": "0.1.12",
   "identifier": "me.hominio.app",
   "build": {
