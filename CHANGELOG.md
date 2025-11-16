@@ -1,3 +1,10 @@
+## [0.1.17](https://github.com/hominiome/hominio-app/compare/v0.1.16...v0.1.17) (2025-11-16)
+
+
+### Bug Fixes
+
+* remove deprecated husky hook lines ([a04ef96](https://github.com/hominiome/hominio-app/commit/a04ef96e0cd5ace35ce450e0836859efb3d8eac9))
+
 ## [0.1.16](https://github.com/hominiome/hominio-app/compare/v0.1.15...v0.1.16) (2025-11-16)
 
 
