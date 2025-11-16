@@ -1,3 +1,10 @@
+## [0.1.22](https://github.com/hominiome/hominio-app/compare/v0.1.21...v0.1.22) (2025-11-16)
+
+
+### Bug Fixes
+
+* create server address file for Tauri xcode-script ([659012e](https://github.com/hominiome/hominio-app/commit/659012e65d1fdba18606e6d3571d83761815666f))
+
 ## [0.1.21](https://github.com/hominiome/hominio-app/compare/v0.1.20...v0.1.21) (2025-11-16)
 
 
