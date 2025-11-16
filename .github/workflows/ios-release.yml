@@ -18,6 +18,8 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: read
+      # Note: Organization secrets are automatically available if the repository
+      # has access. Repository secrets take precedence over organization secrets.
     steps:
       # ============================================
       # Setup & Dependencies
@@ -87,13 +89,35 @@ jobs:
 
       - name: Import code signing certificates and profiles
         run: |
+          # Debug: Check if secrets are accessible (without exposing values)
+          echo "Checking secret availability..."
+          if [ -z "${{ secrets.IOS_DISTRIBUTION_CERTIFICATE }}" ]; then
+            echo "⚠️  IOS_DISTRIBUTION_CERTIFICATE is empty or not accessible"
+          else
+            echo "✅ IOS_DISTRIBUTION_CERTIFICATE is available"
+          fi
+          
+          if [ -z "${{ secrets.IOS_PROVISIONING_PROFILE }}" ]; then
+            echo "⚠️  IOS_PROVISIONING_PROFILE is empty or not accessible"
+          else
+            echo "✅ IOS_PROVISIONING_PROFILE is available"
+          fi
+          
+          if [ -z "${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}" ]; then
+            echo "⚠️  IOS_DISTRIBUTION_CERTIFICATE_PASSWORD is empty or not accessible"
+          else
+            echo "✅ IOS_DISTRIBUTION_CERTIFICATE_PASSWORD is available"
+          fi
+          
           # Check if secrets are provided (they may be empty)
           CERT="${{ secrets.IOS_DISTRIBUTION_CERTIFICATE }}"
           PROFILE="${{ secrets.IOS_PROVISIONING_PROFILE }}"
 
           if [ -z "$CERT" ] || [ -z "$PROFILE" ] || [ "$CERT" = "" ] || [ "$PROFILE" = "" ]; then
-            echo "Certificates/profiles not provided, skipping import..."
-            exit 0
+            echo "❌ Certificates/profiles not provided or not accessible"
+            echo "Please ensure secrets are set at either repository or organization level"
+            echo "Repository secrets take precedence over organization secrets"
+            exit 1
           fi
           # Create a temporary keychain for code signing
           security create-keychain -p "" build.keychain
