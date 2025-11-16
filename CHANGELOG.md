@@ -1,3 +1,12 @@
+## [0.1.14](https://github.com/hominiome/hominio-app/compare/v0.1.13...v0.1.14) (2025-11-16)
+
+
+### Bug Fixes
+
+* ensure CI environment variables are available to Xcode build scripts ([9434cb8](https://github.com/hominiome/hominio-app/commit/9434cb8de662aa809c2e24b8599c876048b63dd3))
+* ensure semantic-release creates published GitHub releases ([38d8185](https://github.com/hominiome/hominio-app/commit/38d81851d8a19fc2532055472f8807dd4f96d783))
+* pass CI environment variables to xcodebuild and prevent WebSocket connection ([9abe00d](https://github.com/hominiome/hominio-app/commit/9abe00d89e76841d3a3ab13e755cc5d070bad9ee))
+
 ## [0.1.13](https://github.com/hominiome/hominio-app/compare/v0.1.12...v0.1.13) (2025-11-16)
 
 
