@@ -65,8 +65,15 @@ jobs:
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}.p8
 
       - name: Import code signing certificates and profiles
-        if: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE != '' && secrets.IOS_PROVISIONING_PROFILE != '' }}
         run: |
+          # Check if secrets are provided (they may be empty)
+          CERT="${{ secrets.IOS_DISTRIBUTION_CERTIFICATE }}"
+          PROFILE="${{ secrets.IOS_PROVISIONING_PROFILE }}"
+          
+          if [ -z "$CERT" ] || [ -z "$PROFILE" ] || [ "$CERT" = "" ] || [ "$PROFILE" = "" ]; then
+            echo "Certificates/profiles not provided, skipping import..."
+            exit 0
+          fi
           # Create a temporary keychain for code signing
           security create-keychain -p "" build.keychain
           security default-keychain -s build.keychain
