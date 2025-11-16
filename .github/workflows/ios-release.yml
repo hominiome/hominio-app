@@ -39,7 +39,7 @@ jobs:
           path: |
             ~/.bun/install/cache
             node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
@@ -69,7 +69,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build
-          key: ${{ runner.os }}-frontend-${{ hashFiles('package.json', 'bun.lockb', 'src/**', 'static/**') }}
+          key: ${{ runner.os }}-frontend-${{ hashFiles('package.json', 'bun.lock', 'src/**', 'static/**') }}
           restore-keys: |
             ${{ runner.os }}-frontend-
 
