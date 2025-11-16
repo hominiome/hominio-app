@@ -241,17 +241,9 @@ jobs:
           export TAURI_BUILD=1
           export RUST_BACKTRACE=1
 
-          # Create server address file that Tauri's xcode-script expects (must exist when Xcode runs)
-          # Tauri checks this file to see if dev server is running - use a dummy URL to prevent EmptyHost error
-          echo "Creating server address file for Tauri..."
-          SERVER_ADDR="http://localhost:5173"
-          if [ -n "$TMPDIR" ] && [ -d "$TMPDIR" ]; then
-            echo "$SERVER_ADDR" > "${TMPDIR}/me.hominio.app-server-addr" && echo "✅ Created: ${TMPDIR}/me.hominio.app-server-addr with $SERVER_ADDR"
-          fi
-          # Also create in /var/folders/*/T/ directories (macOS temp pattern)
-          find /var/folders -type d -name "T" 2>/dev/null | head -5 | while read T_DIR; do
-            echo "$SERVER_ADDR" > "${T_DIR}/me.hominio.app-server-addr" 2>/dev/null && echo "✅ Created: ${T_DIR}/me.hominio.app-server-addr" || true
-          done
+          # Don't create server address file - Tauri should detect CI mode and skip dev server check
+          # If CI=true is properly passed to xcodebuild, Tauri won't try to connect to dev server
+          echo "Skipping server address file creation - CI mode should prevent dev server connection"
 
           # Build with code signing
           # If certificates/profiles are imported, use manual signing
@@ -292,8 +284,8 @@ jobs:
             security find-identity -v -p codesigning
             
             # Use UUID for PROVISIONING_PROFILE (Xcode expects UUID, not path)
-            # CI and TAURI_BUILD are already set above
-            xcodebuild \
+            # Pass CI environment variables to xcodebuild so they're available to build scripts
+            CI=true TAURI_BUILD=1 RUST_BACKTRACE=1 xcodebuild \
               -workspace app.xcodeproj/project.xcworkspace \
               -scheme app_iOS \
               -sdk "$IOS_SDK" \
@@ -313,8 +305,8 @@ jobs:
               }
           else
             echo "Using automatic code signing..."
-            # CI and TAURI_BUILD are already set above
-            xcodebuild -allowProvisioningUpdates \
+            # Pass CI environment variables to xcodebuild so they're available to build scripts
+            CI=true TAURI_BUILD=1 RUST_BACKTRACE=1 xcodebuild -allowProvisioningUpdates \
               -workspace app.xcodeproj/project.xcworkspace \
               -scheme app_iOS \
               -sdk "$IOS_SDK" \
