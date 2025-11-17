@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     tags:
-      - 'v*'  # Trigger on version tags (v0.1.1, v1.0.0, etc.)
+      - 'v*' # Trigger on version tags (v0.1.1, v1.0.0, etc.)
 
 jobs:
   # Job 1: Run semantic-release (only on main branch pushes)
@@ -18,8 +18,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Required for semantic-release
-          token: ${{ secrets.GITHUB_TOKEN }}  # Required for pushing tags
+          fetch-depth: 0 # Required for semantic-release
+          token: ${{ secrets.GITHUB_TOKEN }} # Required for pushing tags
       - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
@@ -91,4 +91,3 @@ jobs:
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

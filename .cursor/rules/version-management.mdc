@@ -56,6 +56,53 @@ bun run release:dry-run
 
 This shows what version would be released without making any changes.
 
+### Git Workflow: Use Rebase by Default
+
+**Why rebasing matters for semantic-release:**
+- **Linear history**: Creates a clean, linear commit history that's easier for semantic-release to analyze
+- **Better commit analysis**: semantic-release analyzes commits since the last tag/release. A linear history makes it easier to identify which commits belong to which release
+- **Cleaner CHANGELOG**: A linear history produces cleaner, more readable changelogs without merge commit noise
+- **Easier debugging**: Linear history makes it easier to track down when bugs were introduced
+
+**Recommended Git Configuration:**
+
+```bash
+# Set rebase as default for git pull
+git config pull.rebase true
+
+# Or set globally for all repositories
+git config --global pull.rebase true
+
+# Set rebase as default for git pull with merge strategy (safer)
+git config pull.rebase merges
+
+# Or globally
+git config --global pull.rebase merges
+```
+
+**Workflow with Rebase:**
+
+```bash
+# When pulling updates from main
+git pull --rebase
+
+# When merging feature branches, use rebase first
+git checkout feature-branch
+git rebase main
+git checkout main
+git merge feature-branch  # This will be a fast-forward merge
+
+# Or use GitHub's "Rebase and merge" option when merging PRs
+```
+
+**Benefits:**
+- No unnecessary merge commits cluttering the history
+- Each commit message is preserved and analyzed correctly by semantic-release
+- Easier to see the actual changes that went into each release
+- CHANGELOG.md is cleaner and more accurate
+
+**Note:** Always rebase feature branches before merging to `main` to maintain a clean linear history. This ensures semantic-release can accurately analyze commits and generate proper version bumps.
+
 ---
 
 ## GitHub Actions Integration
@@ -147,6 +194,7 @@ git commit -m "chore: update dependencies"
 ## Important Notes
 
 - **ALWAYS use conventional commits** - This is required for semantic-release to work
+- **Use rebase by default** - Maintain a linear commit history for better semantic-release analysis and cleaner changelogs
 - **Version sync happens automatically** - When you run `bun run release`, all version files are updated
 - **Test before releasing** - Use `bun run release:dry-run` to preview changes
 - **Breaking changes** - Breaking change commits (`feat!:` or `BREAKING CHANGE:`) will be documented in CHANGELOG but will **NOT** trigger automatic major version bumps.
