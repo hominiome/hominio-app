@@ -1,3 +1,10 @@
+## [0.5.10](https://github.com/hominiome/hominio/compare/v0.5.9...v0.5.10) (2025-11-17)
+
+
+### Bug Fixes
+
+* correct git plugin asset paths for semantic-release ([9800a47](https://github.com/hominiome/hominio/commit/9800a472b7969974e7596d3f03774fab1e085600))
+
 ## [0.1.23](https://github.com/hominiome/hominio-app/compare/v0.1.22...v0.1.23) (2025-11-17)
 
 
