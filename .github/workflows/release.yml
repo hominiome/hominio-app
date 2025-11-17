@@ -26,7 +26,9 @@ jobs:
       - run: bun install
       - name: Run semantic-release
         id: semantic-release
-        run: bun run release
+        # Use npx to run semantic-release with Node.js (required by semantic-release)
+        # Bun is used for installs, but semantic-release needs Node.js runtime
+        run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
