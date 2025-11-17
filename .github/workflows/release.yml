@@ -26,58 +26,68 @@ jobs:
         run: bun run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # After semantic-release runs, check if release was created
-      # If not, create it manually (fallback in case @semantic-release/github fails)
-      - name: Ensure release exists for tag
+      # After semantic-release runs, ensure release exists for any new tags
+      # This is a fallback in case @semantic-release/github plugin doesn't create releases
+      - name: Ensure releases exist for all tags
         run: |
-          # Fetch tags that semantic-release just pushed
-          git fetch --tags --force
+          echo "🔄 Fetching all tags from remote..."
+          git fetch origin --tags --force
           
-          # Get the latest tag (should be the one just created by semantic-release)
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          # Get all tags, sorted by version
+          ALL_TAGS=$(git tag -l 'v*' | sort -V)
           
-          if [ -z "$LATEST_TAG" ]; then
-            echo "⚠️  No tags found - semantic-release may not have created a release"
+          if [ -z "$ALL_TAGS" ]; then
+            echo "⚠️  No version tags found"
             exit 0
           fi
           
-          echo "📋 Latest tag: $LATEST_TAG"
+          echo "📋 Found tags:"
+          echo "$ALL_TAGS"
           
-          # Check if release exists
-          if gh release view "$LATEST_TAG" &>/dev/null; then
-            echo "✅ Release already exists for $LATEST_TAG"
-          else
-            echo "⚠️  Release not found for $LATEST_TAG, creating it..."
+          # Check each tag and create release if missing
+          for TAG in $ALL_TAGS; do
+            echo ""
+            echo "🔍 Checking tag: $TAG"
             
-            # Extract release notes from CHANGELOG
-            VERSION_NUM="${LATEST_TAG#v}"  # Remove 'v' prefix
-            
-            if [ -f services/app/CHANGELOG.md ]; then
-              # Extract the section for this version from CHANGELOG.md
-              NOTES=$(awk "/^## \[${VERSION_NUM}\]/,/^## \[/" services/app/CHANGELOG.md | sed '$d' || echo "")
+            # Check if release exists
+            if gh release view "$TAG" &>/dev/null; then
+              echo "✅ Release already exists for $TAG"
+            else
+              echo "⚠️  Release NOT found for $TAG - creating it..."
               
-              if [ -n "$NOTES" ]; then
-                echo "📝 Using CHANGELOG notes for release"
-                gh release create "$LATEST_TAG" \
-                  --title "$LATEST_TAG" \
-                  --notes "$NOTES" \
-                  --target main
+              # Extract release notes from CHANGELOG
+              VERSION_NUM="${TAG#v}"  # Remove 'v' prefix
+              
+              if [ -f services/app/CHANGELOG.md ]; then
+                # Extract the section for this version from CHANGELOG.md
+                NOTES=$(awk "/^## \[${VERSION_NUM}\]/,/^## \[/" services/app/CHANGELOG.md | sed '$d' || echo "")
+                
+                if [ -n "$NOTES" ] && [ "$NOTES" != "" ]; then
+                  echo "📝 Using CHANGELOG notes for $TAG"
+                  echo "$NOTES" | gh release create "$TAG" \
+                    --title "$TAG" \
+                    --notes-file - \
+                    --target main
+                else
+                  echo "📝 Generating release notes automatically for $TAG"
+                  gh release create "$TAG" \
+                    --title "$TAG" \
+                    --generate-notes \
+                    --target main
+                fi
               else
-                echo "📝 Generating release notes automatically"
-                gh release create "$LATEST_TAG" \
-                  --title "$LATEST_TAG" \
+                echo "📝 Generating release notes automatically for $TAG (no CHANGELOG)"
+                gh release create "$TAG" \
+                  --title "$TAG" \
                   --generate-notes \
                   --target main
               fi
-            else
-              echo "📝 Generating release notes automatically (no CHANGELOG found)"
-              gh release create "$LATEST_TAG" \
-                --title "$LATEST_TAG" \
-                --generate-notes \
-                --target main
+              
+              echo "✅ Release created for $TAG"
             fi
-            
-            echo "✅ Release created for $LATEST_TAG"
-          fi
+          done
+          
+          echo ""
+          echo "✨ Done checking all tags!"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
