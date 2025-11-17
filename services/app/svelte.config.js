@@ -4,7 +4,8 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 // Use adapter-static for Tauri builds (iOS/desktop), adapter-node for web server (Fly.io)
 // TAURI_BUILD is set in tauri.conf.json beforeBuildCommand when building for Tauri
-const isTauriBuild = process.env.TAURI_BUILD === '1' || process.env.TAURI_PLATFORM !== undefined;
+// Tauri also sets TAURI_ENV_PLATFORM during hook commands (beforeDevCommand, beforeBuildCommand)
+const isTauriBuild = process.env.TAURI_BUILD === '1' || process.env.TAURI_ENV_PLATFORM !== undefined;
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {

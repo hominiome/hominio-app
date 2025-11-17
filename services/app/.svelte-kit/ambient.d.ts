@@ -27,59 +27,67 @@
  */
 declare module '$env/static/private' {
 	export const NVM_INC: string;
-	export const POLAR_API_KEY: string;
 	export const TERM_PROGRAM: string;
 	export const NODE: string;
 	export const NVM_CD_FLAGS: string;
-	export const WALLET_POSTGRES_SECRET: string;
 	export const SHELL: string;
 	export const TERM: string;
+	export const TAURI_IOS_APP_NAME: string;
 	export const TMPDIR: string;
 	export const TERM_PROGRAM_VERSION: string;
+	export const CURSOR_TRACE_ID: string;
 	export const MallocNanoZone: string;
 	export const ORIGINAL_XDG_CURRENT_DESKTOP: string;
-	export const CURSOR_TRACE_ID: string;
+	export const TAURI_CLI_VERBOSITY: string;
 	export const ZDOTDIR: string;
 	export const PNPM_HOME: string;
 	export const npm_config_local_prefix: string;
-	export const AUTH_SECRET: string;
-	export const USER: string;
 	export const NVM_DIR: string;
+	export const USER: string;
+	export const TAURI_ENV_TARGET_TRIPLE: string;
 	export const COMMAND_MODE: string;
-	export const SECRET_BASE_URL: string;
 	export const SSH_AUTH_SOCK: string;
-	export const __CF_USER_TEXT_ENCODING: string;
 	export const VSCODE_PROFILE_INITIALIZED: string;
+	export const __CF_USER_TEXT_ENCODING: string;
 	export const npm_execpath: string;
+	export const PAGER: string;
+	export const TAURI_ENV_PLATFORM: string;
 	export const PATH: string;
 	export const _: string;
 	export const npm_package_json: string;
-	export const __CFBundleIdentifier: string;
+	export const TAURI_ENV_FAMILY: string;
+	export const TAURI_ENV_PLATFORM_VERSION: string;
 	export const USER_ZDOTDIR: string;
+	export const __CFBundleIdentifier: string;
 	export const PWD: string;
 	export const npm_command: string;
+	export const DISABLE_AUTO_UPDATE: string;
 	export const npm_lifecycle_event: string;
+	export const CURSOR_AGENT: string;
 	export const LANG: string;
 	export const npm_package_name: string;
-	export const POLAR_WEBHOOK_SECRET: string;
-	export const XPC_FLAGS: string;
+	export const TAURI_IOS_PROJECT_PATH: string;
 	export const VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
-	export const SECRET_ZERO_AUTH_SECRET: string;
+	export const XPC_FLAGS: string;
+	export const TAURI_ENV_ARCH: string;
+	export const npm_package_version: string;
 	export const XPC_SERVICE_NAME: string;
 	export const VSCODE_INJECTION: string;
+	export const npm_config_yes: string;
 	export const HOME: string;
 	export const SHLVL: string;
 	export const VSCODE_GIT_ASKPASS_MAIN: string;
+	export const PIP_NO_INPUT: string;
 	export const LOGNAME: string;
-	export const GOOGLE_CLIENT_SECRET: string;
 	export const npm_lifecycle_script: string;
+	export const COMPOSER_NO_INTERACTION: string;
 	export const VSCODE_GIT_IPC_HANDLE: string;
-	export const NVM_BIN: string;
 	export const BUN_INSTALL: string;
+	export const IPHONEOS_DEPLOYMENT_TARGET: string;
+	export const NVM_BIN: string;
 	export const npm_config_user_agent: string;
 	export const GIT_ASKPASS: string;
 	export const VSCODE_GIT_ASKPASS_NODE: string;
-	export const GOOGLE_CLIENT_ID: string;
 	export const COLORTERM: string;
 	export const npm_node_execpath: string;
 	export const NODE_ENV: string;
@@ -95,10 +103,7 @@ declare module '$env/static/private' {
  * ```
  */
 declare module '$env/static/public' {
-	export const PUBLIC_DOMAIN_WALLET: string;
-	export const PUBLIC_DOMAIN_APP: string;
-	export const PUBLIC_DOMAIN_SYNC: string;
-	export const PUBLIC_DOMAIN_ROOT: string;
+	
 }
 
 /**
@@ -116,59 +121,67 @@ declare module '$env/static/public' {
 declare module '$env/dynamic/private' {
 	export const env: {
 		NVM_INC: string;
-		POLAR_API_KEY: string;
 		TERM_PROGRAM: string;
 		NODE: string;
 		NVM_CD_FLAGS: string;
-		WALLET_POSTGRES_SECRET: string;
 		SHELL: string;
 		TERM: string;
+		TAURI_IOS_APP_NAME: string;
 		TMPDIR: string;
 		TERM_PROGRAM_VERSION: string;
+		CURSOR_TRACE_ID: string;
 		MallocNanoZone: string;
 		ORIGINAL_XDG_CURRENT_DESKTOP: string;
-		CURSOR_TRACE_ID: string;
+		TAURI_CLI_VERBOSITY: string;
 		ZDOTDIR: string;
 		PNPM_HOME: string;
 		npm_config_local_prefix: string;
-		AUTH_SECRET: string;
-		USER: string;
 		NVM_DIR: string;
+		USER: string;
+		TAURI_ENV_TARGET_TRIPLE: string;
 		COMMAND_MODE: string;
-		SECRET_BASE_URL: string;
 		SSH_AUTH_SOCK: string;
-		__CF_USER_TEXT_ENCODING: string;
 		VSCODE_PROFILE_INITIALIZED: string;
+		__CF_USER_TEXT_ENCODING: string;
 		npm_execpath: string;
+		PAGER: string;
+		TAURI_ENV_PLATFORM: string;
 		PATH: string;
 		_: string;
 		npm_package_json: string;
-		__CFBundleIdentifier: string;
+		TAURI_ENV_FAMILY: string;
+		TAURI_ENV_PLATFORM_VERSION: string;
 		USER_ZDOTDIR: string;
+		__CFBundleIdentifier: string;
 		PWD: string;
 		npm_command: string;
+		DISABLE_AUTO_UPDATE: string;
 		npm_lifecycle_event: string;
+		CURSOR_AGENT: string;
 		LANG: string;
 		npm_package_name: string;
-		POLAR_WEBHOOK_SECRET: string;
-		XPC_FLAGS: string;
+		TAURI_IOS_PROJECT_PATH: string;
 		VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
-		SECRET_ZERO_AUTH_SECRET: string;
+		XPC_FLAGS: string;
+		TAURI_ENV_ARCH: string;
+		npm_package_version: string;
 		XPC_SERVICE_NAME: string;
 		VSCODE_INJECTION: string;
+		npm_config_yes: string;
 		HOME: string;
 		SHLVL: string;
 		VSCODE_GIT_ASKPASS_MAIN: string;
+		PIP_NO_INPUT: string;
 		LOGNAME: string;
-		GOOGLE_CLIENT_SECRET: string;
 		npm_lifecycle_script: string;
+		COMPOSER_NO_INTERACTION: string;
 		VSCODE_GIT_IPC_HANDLE: string;
-		NVM_BIN: string;
 		BUN_INSTALL: string;
+		IPHONEOS_DEPLOYMENT_TARGET: string;
+		NVM_BIN: string;
 		npm_config_user_agent: string;
 		GIT_ASKPASS: string;
 		VSCODE_GIT_ASKPASS_NODE: string;
-		GOOGLE_CLIENT_ID: string;
 		COLORTERM: string;
 		npm_node_execpath: string;
 		NODE_ENV: string;
@@ -189,10 +202,6 @@ declare module '$env/dynamic/private' {
  */
 declare module '$env/dynamic/public' {
 	export const env: {
-		PUBLIC_DOMAIN_WALLET: string;
-		PUBLIC_DOMAIN_APP: string;
-		PUBLIC_DOMAIN_SYNC: string;
-		PUBLIC_DOMAIN_ROOT: string;
 		[key: `PUBLIC_${string}`]: string | undefined;
 	}
 }
