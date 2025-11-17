@@ -3,10 +3,15 @@ name: Release
 on:
   push:
     branches: [main]
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags (v0.1.1, v1.0.0, etc.)
 
 jobs:
-  release:
+  # Job 1: Run semantic-release (only on main branch pushes)
+  semantic-release:
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: write
       issues: write
@@ -21,6 +26,70 @@ jobs:
           bun-version: latest
       - run: bun install
       - run: bun run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Job 2: Create release for tag (only on tag pushes)
+  create-release-from-tag:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Extract tag name
+        id: tag
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "Tag: $TAG_NAME"
+      - name: Check if release exists
+        id: check-release
+        run: |
+          RELEASE_EXISTS=$(gh release view "${{ steps.tag.outputs.tag_name }}" 2>&1 || echo "not found")
+          if [[ "$RELEASE_EXISTS" == *"not found"* ]]; then
+            echo "exists=false" >> $GITHUB_OUTPUT
+          else
+            echo "exists=true" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract release notes from CHANGELOG
+        id: changelog
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            # Extract the section for this version from CHANGELOG.md
+            VERSION="${{ steps.tag.outputs.tag_name }}"
+            VERSION_NUM="${VERSION#v}"  # Remove 'v' prefix
+            # Try to find the version section in CHANGELOG
+            NOTES=$(awk "/^## \[${VERSION_NUM}\]/,/^## \[/" CHANGELOG.md | sed '$d' || echo "")
+            if [ -n "$NOTES" ]; then
+              echo "notes<<EOF" >> $GITHUB_OUTPUT
+              echo "$NOTES" >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+              echo "has_notes=true" >> $GITHUB_OUTPUT
+            else
+              echo "has_notes=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "has_notes=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Create GitHub release
+        if: steps.check-release.outputs.exists == 'false'
+        run: |
+          if [ "${{ steps.changelog.outputs.has_notes }}" == "true" ]; then
+            gh release create "${{ steps.tag.outputs.tag_name }}" \
+              --title "${{ steps.tag.outputs.tag_name }}" \
+              --notes "${{ steps.changelog.outputs.notes }}" \
+              --target main
+          else
+            gh release create "${{ steps.tag.outputs.tag_name }}" \
+              --title "${{ steps.tag.outputs.tag_name }}" \
+              --generate-notes \
+              --target main
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

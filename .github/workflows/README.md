@@ -138,20 +138,18 @@ If you want to avoid manual Apple ID authentication in CI, you can provide certi
 - Creates GitHub release with tag
 - Generates CHANGELOG.md
 
-### 2. iOS Release Workflow (`ios-release.yml`)
+### 2. iOS Release Workflow (Currently Disabled)
 
-**Triggers:**
+**Status:** The iOS release workflow has been temporarily disabled.
 
-- When a GitHub release is created (automatically after semantic-release)
-- Manual trigger via GitHub Actions UI
+**Previous functionality (when enabled):**
 
-**What it does:**
+- Built frontend (SvelteKit)
+- Built iOS app (Tauri)
+- Uploaded IPA to TestFlight
+- Saved IPA as artifact
 
-
-- Builds frontend (SvelteKit)
-- Builds iOS app (Tauri)
-- Uploads IPA to TestFlight
-- Saves IPA as artifact
+**Note:** For now, iOS builds should be done locally and uploaded manually via Transporter or Xcode.
 
 ## Complete Automated Flow
 
@@ -161,36 +159,21 @@ If you want to avoid manual Apple ID authentication in CI, you can provide certi
    - Analyzes commits
    - Bumps version (e.g., 0.1.1 → 0.2.0)
    - Creates GitHub release
-4. **iOS workflow** automatically triggers:
-   - Builds iOS app
-   - Uploads to TestFlight
-5. **Done!** App appears in TestFlight automatically
-
-## Manual Trigger
-
-You can also manually trigger the iOS build:
-
-1. Go to **Actions** tab in GitHub
-2. Select **iOS Release to TestFlight**
-3. Click **Run workflow**
-4. Optionally specify a version
-5. Click **Run workflow**
+4. **iOS builds** are currently done manually:
+   - Build locally: `bun run tauri:ios:build`
+   - Upload via Transporter or Xcode
 
 ## Troubleshooting
 
-### Build fails
+### Release Workflow Issues
 
-- Check that `APPLE_DEVELOPMENT_TEAM` secret is set correctly
+- Ensure commits follow conventional commit format
+- Check that you're pushing to `main` branch
+- Verify `GITHUB_TOKEN` has proper permissions
+
+### Local iOS Build Issues
+
+- Check that `APPLE_DEVELOPMENT_TEAM` is set in `tauri.conf.json`
 - Verify Xcode version compatibility
 - Check Rust toolchain installation
-
-### TestFlight upload fails
-
-- Verify App Store Connect API key secrets are correct
-- Check that the API key has App Manager permissions
-- Ensure the bundle ID matches App Store Connect
-
-### IPA not found
-
-- Check build logs for errors
-- Verify the build path: `src-tauri/gen/apple/build/*/hominio-app.ipa`
+- Ensure provisioning profiles are set up correctly
