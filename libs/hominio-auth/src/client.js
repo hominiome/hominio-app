@@ -2,12 +2,21 @@ import { createAuthClient as createBetterAuthClient } from "better-auth/svelte";
 import { polarClient } from "@polar-sh/better-auth";
 
 /**
- * Get the wallet service API URL from environment variable
- * Defaults to localhost:4201 for development
+ * Get the wallet service API URL
+ * - Production builds (Tauri iOS/macOS/desktop): Always use wallet.hominio.me
+ * - Development: Use env var or localhost:4201
  * Works in both browser and server contexts
  */
 function getWalletApiUrl() {
-  // Use import.meta.env for Vite/SvelteKit (works in both browser and server)
+  // Check if we're in a production build (Tauri builds are always production)
+  const isProduction = import.meta.env.PROD;
+  
+  // For production builds (Tauri iOS, macOS, desktop), always use production wallet service
+  if (isProduction) {
+    return 'https://wallet.hominio.me/api/auth';
+  }
+  
+  // For development, use env var or localhost fallback
   const walletDomain = import.meta.env.PUBLIC_DOMAIN_WALLET || 'localhost:4201';
   const protocol = walletDomain.startsWith('localhost') || walletDomain.startsWith('127.0.0.1') ? 'http' : 'https';
   return `${protocol}://${walletDomain}/api/auth`;

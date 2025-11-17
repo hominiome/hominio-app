@@ -23,6 +23,27 @@ jobs:
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
+      - name: Create Fly.io app if it doesn't exist
+        run: |
+          # Check if app exists, create if it doesn't
+          if ! flyctl apps list | grep -q "hominio-wallet"; then
+            echo "📦 Creating Fly.io app: hominio-wallet..."
+            flyctl apps create hominio-wallet --org personal || {
+              echo "⚠️  Failed to create app. It may already exist or you need to specify a different org."
+              echo "   Continuing with deployment - app may need to be created manually."
+            }
+            
+            # Set primary region
+            flyctl regions set fra --app hominio-wallet || true
+            
+            # Allocate IP addresses
+            echo "🌐 Allocating IP addresses..."
+            flyctl ips allocate-v4 --app hominio-wallet || true
+            flyctl ips allocate-v6 --app hominio-wallet || true
+          else
+            echo "✅ App hominio-wallet already exists"
+          fi
+
       - name: Set Fly.io secrets for wallet service
         run: |
           # Set all required environment variables from GitHub secrets
