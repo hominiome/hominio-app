@@ -5,7 +5,7 @@ import { env } from "$env/dynamic/private";
 import { env as publicEnv } from "$env/dynamic/public";
 import { getAuthDb } from "$lib/db.server";
 import { getTrustedOrigins } from "$lib/utils/domain";
-import { polar, webhooks, checkout } from "@polar-sh/better-auth";
+import { polar } from "@polar-sh/better-auth";
 import { Polar } from "@polar-sh/sdk";
 
 // Get environment variables at runtime (not build time)
@@ -15,11 +15,7 @@ const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET || "";
 const AUTH_SECRET =
   env.AUTH_SECRET || "dev-secret-key-change-in-production";
 const POLAR_API_KEY = env.POLAR_API_KEY || "";
-const POLAR_WEBHOOK_SECRET = env.POLAR_WEBHOOK_SECRET || "";
 // PUBLIC_ vars are accessible in both client and server
-// Fallback to localhost/sandbox product ID if not set (for development)
-const PUBLIC_POLAR_PRODUCT_ID_1 =
-  publicEnv.PUBLIC_POLAR_PRODUCT_ID_1 || "aa8e6119-7f7f-4ce3-abde-666720be9fb3";
 
 // Detect environment - only use secure cookies in production
 // Check if domain contains "hominio.me" (production) or "localhost" (development)
@@ -75,59 +71,8 @@ export const auth = betterAuth({
           polar({
             client: polarClient,
             createCustomerOnSignUp: true, // Automatically sync user accounts with Polar
-            use: [
-              // Checkout plugin - enable Polar checkout flow
-              ...(PUBLIC_POLAR_PRODUCT_ID_1
-                ? [
-                    checkout({
-                      products: [
-                        {
-                          productId: PUBLIC_POLAR_PRODUCT_ID_1,
-                          slug: "I-am-Hominio", // Custom slug for easy reference in Checkout URL
-                        },
-                      ],
-                      successUrl: "/alpha",
-                      authenticatedUsersOnly: true, // Require user to be logged in
-                    }),
-                  ]
-                : []),
-              // Webhooks plugin - handle Polar webhook events
-              // Webhook endpoint is automatically available at: /api/auth/polar/webhooks
-              ...(POLAR_WEBHOOK_SECRET
-                ? [
-                    webhooks({
-                      secret: POLAR_WEBHOOK_SECRET,
-                      // Event handlers (empty - events are handled by the native SvelteKit adapter)
-                      onPayload: (payload) => {},
-                      onCheckoutCreated: (payload) => {},
-                      onCheckoutUpdated: (payload) => {},
-                      onOrderCreated: (payload) => {},
-                      onOrderPaid: (payload) => {},
-                      onOrderRefunded: (payload) => {},
-                      onSubscriptionCreated: (payload) => {},
-                      onSubscriptionUpdated: (payload) => {},
-                      onSubscriptionActive: (payload) => {},
-                      onSubscriptionCanceled: (payload) => {},
-                      onSubscriptionRevoked: (payload) => {},
-                      onSubscriptionUncanceled: (payload) => {},
-                      onCustomerCreated: (payload) => {},
-                      onCustomerUpdated: (payload) => {},
-                      onCustomerDeleted: (payload) => {},
-                      onCustomerStateChanged: (payload) => {},
-                      onBenefitCreated: (payload) => {},
-                      onBenefitUpdated: (payload) => {},
-                      onBenefitGrantCreated: (payload) => {},
-                      onBenefitGrantUpdated: (payload) => {},
-                      onBenefitGrantRevoked: (payload) => {},
-                      onProductCreated: (payload) => {},
-                      onProductUpdated: (payload) => {},
-                      onRefundCreated: (payload) => {},
-                      onRefundUpdated: (payload) => {},
-                      onOrganizationUpdated: (payload) => {},
-                    }),
-                  ]
-                : []),
-            ],
+            // Note: Checkout and webhooks are handled by the legacy system for now
+            // Dedicated services will be created later
           }),
         ]
       : []),

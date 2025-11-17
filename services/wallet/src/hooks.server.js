@@ -7,14 +7,14 @@ export async function handle({ event, resolve }) {
 	// Handle CORS preflight requests for BetterAuth API
 	if (event.request.method === 'OPTIONS') {
 		const origin = event.request.headers.get('origin');
-		const headers = {};
+		const headers = new Headers();
 		
 		if (origin && isTrustedOrigin(origin)) {
-			headers['Access-Control-Allow-Origin'] = origin;
-			headers['Access-Control-Allow-Credentials'] = 'true';
-			headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
-			headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Cookie';
-			headers['Access-Control-Max-Age'] = '86400'; // 24 hours
+			headers.set('Access-Control-Allow-Origin', origin);
+			headers.set('Access-Control-Allow-Credentials', 'true');
+			headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+			headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
+			headers.set('Access-Control-Max-Age', '86400'); // 24 hours
 		}
 		
 		return new Response(null, { status: 204, headers });

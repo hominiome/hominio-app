@@ -1,0 +1,56 @@
+name: Deploy Wallet Service to Fly.io
+
+on:
+  push:
+    branches: [main]  # Only trigger on main branch
+    paths:
+      - 'services/wallet/**'
+      - 'libs/hominio-auth/**'
+      - '.github/workflows/deploy-wallet.yml'
+  workflow_dispatch: # Allow manual trigger (still requires main branch)
+
+jobs:
+  deploy-wallet:
+    name: Deploy wallet service
+    runs-on: ubuntu-latest
+    environment: PRODUCTION
+    # FLY_API_TOKEN is an organization-wide secret (accessible regardless of environment)
+    # All other secrets are from the PRODUCTION environment
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Set Fly.io secrets for wallet service
+        run: |
+          # Set all required environment variables from GitHub secrets
+          # PUBLIC_ vars are public and accessible in both client and server
+          # Non-PUBLIC vars are secret and only accessible on the server
+          flyctl secrets set \
+            PUBLIC_DOMAIN_ROOT="${{ secrets.PUBLIC_DOMAIN_ROOT }}" \
+            PUBLIC_DOMAIN_APP="${{ secrets.PUBLIC_DOMAIN_APP }}" \
+            PUBLIC_DOMAIN_WALLET="${{ secrets.PUBLIC_DOMAIN_WALLET }}" \
+            PUBLIC_DOMAIN_SYNC="${{ secrets.PUBLIC_DOMAIN_SYNC }}" \
+            AUTH_SECRET="${{ secrets.AUTH_SECRET }}" \
+            GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+            WALLET_POSTGRES_SECRET="${{ secrets.WALLET_POSTGRES_SECRET }}" \
+            POLAR_API_KEY="${{ secrets.POLAR_API_KEY }}" \
+            NODE_ENV="production" \
+            --app hominio-wallet
+
+          echo "✅ Wallet service secrets set. Verifying..."
+          flyctl secrets list --app hominio-wallet
+
+      - name: Deploy wallet service
+        run: |
+          cd services/wallet
+          flyctl deploy --remote-only --app hominio-wallet
+
+      - name: Check deployment status
+        run: |
+          flyctl status --app hominio-wallet
+          flyctl logs --app hominio-wallet --limit 50
+
