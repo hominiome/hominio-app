@@ -25,6 +25,9 @@
 		"release:dry-run": "semantic-release --dry-run",
 		"release:major": "node scripts/release-major.js"
 	},
+	"dependencies": {
+		"@hominio/auth": "workspace:*"
+	},
 	"devDependencies": {
 		"@eslint/compat": "^1.4.0",
 		"@eslint/js": "^9.38.0",

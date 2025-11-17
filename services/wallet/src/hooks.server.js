@@ -1,0 +1,37 @@
+import { auth } from "$lib/auth.server";
+import { svelteKitHandler } from "better-auth/svelte-kit";
+import { building } from "$app/environment";
+import { isTrustedOrigin } from "$lib/utils/domain";
+
+export async function handle({ event, resolve }) {
+	// Handle CORS preflight requests for BetterAuth API
+	if (event.request.method === 'OPTIONS') {
+		const origin = event.request.headers.get('origin');
+		const headers = {};
+		
+		if (origin && isTrustedOrigin(origin)) {
+			headers['Access-Control-Allow-Origin'] = origin;
+			headers['Access-Control-Allow-Credentials'] = 'true';
+			headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
+			headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Cookie';
+			headers['Access-Control-Max-Age'] = '86400'; // 24 hours
+		}
+		
+		return new Response(null, { status: 204, headers });
+	}
+
+	// Handle BetterAuth requests
+	const response = await svelteKitHandler({ event, resolve, auth, building });
+	
+	// Add CORS headers to BetterAuth responses
+	const origin = event.request.headers.get('origin');
+	if (origin && isTrustedOrigin(origin)) {
+		response.headers.set('Access-Control-Allow-Origin', origin);
+		response.headers.set('Access-Control-Allow-Credentials', 'true');
+		response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+		response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
+	}
+	
+	return response;
+}
+

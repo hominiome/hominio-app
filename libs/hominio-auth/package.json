@@ -1,0 +1,19 @@
+{
+	"name": "@hominio/auth",
+	"version": "0.1.23",
+	"private": true,
+	"type": "module",
+	"main": "src/index.js",
+	"exports": {
+		".": "./src/index.js",
+		"./client": "./src/client.js"
+	},
+	"dependencies": {
+		"@polar-sh/better-auth": "^1.3.0",
+		"better-auth": "^1.3.34"
+	},
+	"peerDependencies": {
+		"svelte": "^5.0.0"
+	}
+}
+

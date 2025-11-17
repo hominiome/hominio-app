@@ -27,9 +27,11 @@
  */
 declare module '$env/static/private' {
 	export const NVM_INC: string;
+	export const POLAR_API_KEY: string;
 	export const TERM_PROGRAM: string;
 	export const NODE: string;
 	export const NVM_CD_FLAGS: string;
+	export const WALLET_POSTGRES_SECRET: string;
 	export const SHELL: string;
 	export const TERM: string;
 	export const TMPDIR: string;
@@ -40,14 +42,15 @@ declare module '$env/static/private' {
 	export const ZDOTDIR: string;
 	export const PNPM_HOME: string;
 	export const npm_config_local_prefix: string;
+	export const AUTH_SECRET: string;
 	export const USER: string;
 	export const NVM_DIR: string;
 	export const COMMAND_MODE: string;
+	export const SECRET_BASE_URL: string;
 	export const SSH_AUTH_SOCK: string;
 	export const __CF_USER_TEXT_ENCODING: string;
 	export const VSCODE_PROFILE_INITIALIZED: string;
 	export const npm_execpath: string;
-	export const PAGER: string;
 	export const PATH: string;
 	export const _: string;
 	export const npm_package_json: string;
@@ -55,29 +58,28 @@ declare module '$env/static/private' {
 	export const USER_ZDOTDIR: string;
 	export const PWD: string;
 	export const npm_command: string;
-	export const DISABLE_AUTO_UPDATE: string;
 	export const npm_lifecycle_event: string;
-	export const CURSOR_AGENT: string;
 	export const LANG: string;
 	export const npm_package_name: string;
+	export const POLAR_WEBHOOK_SECRET: string;
 	export const XPC_FLAGS: string;
 	export const VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
+	export const SECRET_ZERO_AUTH_SECRET: string;
 	export const XPC_SERVICE_NAME: string;
-	export const npm_config_yes: string;
 	export const VSCODE_INJECTION: string;
 	export const HOME: string;
 	export const SHLVL: string;
 	export const VSCODE_GIT_ASKPASS_MAIN: string;
-	export const PIP_NO_INPUT: string;
 	export const LOGNAME: string;
+	export const GOOGLE_CLIENT_SECRET: string;
 	export const npm_lifecycle_script: string;
-	export const COMPOSER_NO_INTERACTION: string;
 	export const VSCODE_GIT_IPC_HANDLE: string;
 	export const NVM_BIN: string;
 	export const BUN_INSTALL: string;
 	export const npm_config_user_agent: string;
 	export const GIT_ASKPASS: string;
 	export const VSCODE_GIT_ASKPASS_NODE: string;
+	export const GOOGLE_CLIENT_ID: string;
 	export const COLORTERM: string;
 	export const npm_node_execpath: string;
 	export const NODE_ENV: string;
@@ -93,7 +95,10 @@ declare module '$env/static/private' {
  * ```
  */
 declare module '$env/static/public' {
-	
+	export const PUBLIC_DOMAIN_WALLET: string;
+	export const PUBLIC_DOMAIN_APP: string;
+	export const PUBLIC_DOMAIN_SYNC: string;
+	export const PUBLIC_DOMAIN_ROOT: string;
 }
 
 /**
@@ -111,9 +116,11 @@ declare module '$env/static/public' {
 declare module '$env/dynamic/private' {
 	export const env: {
 		NVM_INC: string;
+		POLAR_API_KEY: string;
 		TERM_PROGRAM: string;
 		NODE: string;
 		NVM_CD_FLAGS: string;
+		WALLET_POSTGRES_SECRET: string;
 		SHELL: string;
 		TERM: string;
 		TMPDIR: string;
@@ -124,14 +131,15 @@ declare module '$env/dynamic/private' {
 		ZDOTDIR: string;
 		PNPM_HOME: string;
 		npm_config_local_prefix: string;
+		AUTH_SECRET: string;
 		USER: string;
 		NVM_DIR: string;
 		COMMAND_MODE: string;
+		SECRET_BASE_URL: string;
 		SSH_AUTH_SOCK: string;
 		__CF_USER_TEXT_ENCODING: string;
 		VSCODE_PROFILE_INITIALIZED: string;
 		npm_execpath: string;
-		PAGER: string;
 		PATH: string;
 		_: string;
 		npm_package_json: string;
@@ -139,29 +147,28 @@ declare module '$env/dynamic/private' {
 		USER_ZDOTDIR: string;
 		PWD: string;
 		npm_command: string;
-		DISABLE_AUTO_UPDATE: string;
 		npm_lifecycle_event: string;
-		CURSOR_AGENT: string;
 		LANG: string;
 		npm_package_name: string;
+		POLAR_WEBHOOK_SECRET: string;
 		XPC_FLAGS: string;
 		VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
+		SECRET_ZERO_AUTH_SECRET: string;
 		XPC_SERVICE_NAME: string;
-		npm_config_yes: string;
 		VSCODE_INJECTION: string;
 		HOME: string;
 		SHLVL: string;
 		VSCODE_GIT_ASKPASS_MAIN: string;
-		PIP_NO_INPUT: string;
 		LOGNAME: string;
+		GOOGLE_CLIENT_SECRET: string;
 		npm_lifecycle_script: string;
-		COMPOSER_NO_INTERACTION: string;
 		VSCODE_GIT_IPC_HANDLE: string;
 		NVM_BIN: string;
 		BUN_INSTALL: string;
 		npm_config_user_agent: string;
 		GIT_ASKPASS: string;
 		VSCODE_GIT_ASKPASS_NODE: string;
+		GOOGLE_CLIENT_ID: string;
 		COLORTERM: string;
 		npm_node_execpath: string;
 		NODE_ENV: string;
@@ -182,6 +189,10 @@ declare module '$env/dynamic/private' {
  */
 declare module '$env/dynamic/public' {
 	export const env: {
+		PUBLIC_DOMAIN_WALLET: string;
+		PUBLIC_DOMAIN_APP: string;
+		PUBLIC_DOMAIN_SYNC: string;
+		PUBLIC_DOMAIN_ROOT: string;
 		[key: `PUBLIC_${string}`]: string | undefined;
 	}
 }

@@ -27,16 +27,17 @@ export {};
 
 declare module "$app/types" {
 	export interface AppTypes {
-		RouteId(): "/" | "/mini-apps" | "/mini-apps/[id]";
+		RouteId(): "/" | "/mini-apps" | "/mini-apps/[id]" | "/signin";
 		RouteParams(): {
 			"/mini-apps/[id]": { id: string }
 		};
 		LayoutParams(): {
 			"/": { id?: string };
 			"/mini-apps": { id?: string };
-			"/mini-apps/[id]": { id: string }
+			"/mini-apps/[id]": { id: string };
+			"/signin": Record<string, never>
 		};
-		Pathname(): "/" | "/mini-apps" | "/mini-apps/" | `/mini-apps/${string}` & {} | `/mini-apps/${string}/` & {};
+		Pathname(): "/" | "/mini-apps" | "/mini-apps/" | `/mini-apps/${string}` & {} | `/mini-apps/${string}/` & {} | "/signin" | "/signin/";
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
 		Asset(): "/logo_clean.png" | "/mini-apps/snake/index.html" | "/robots.txt" | string & {};
 	}

@@ -8,5 +8,8 @@
 	],
 	"/mini-apps/[id]": [
 		"src/routes/+layout.js"
+	],
+	"/signin": [
+		"src/routes/+layout.js"
 	]
 }

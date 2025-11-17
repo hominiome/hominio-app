@@ -5,8 +5,18 @@ node_modules
 .vercel
 .netlify
 .wrangler
-/.svelte-kit
-/build
+
+# SvelteKit generated files (all services)
+**/.svelte-kit/
+.svelte-kit/
+
+# Build outputs (all services)
+**/build/
+build/
+
+# Rust build artifacts (Tauri)
+**/src-tauri/target/
+**/src-tauri/gen/
 
 # OS
 .DS_Store

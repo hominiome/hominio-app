@@ -5,7 +5,7 @@
   "identifier": "me.hominio.app",
   "build": {
     "frontendDist": "../build",
-    "devUrl": "http://localhost:4201",
+    "devUrl": "http://localhost:4202",
     "beforeDevCommand": "bun dev",
     "beforeBuildCommand": "bun run build"
   },
