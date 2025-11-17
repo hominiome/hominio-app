@@ -28,6 +28,6 @@ ENV HOST=0.0.0.0
 # Expose port
 EXPOSE 3000
 
-# Start the app
-CMD ["bun", "run", "start"]
+# Start the app using Bun (adapter-node creates build/index.js)
+CMD ["bun", "build/index.js"]
 
