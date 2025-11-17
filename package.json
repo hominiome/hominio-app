@@ -25,8 +25,17 @@
 		"tauri:ios:dev": "bun --filter app tauri:ios:dev",
 		"tauri:ios:build": "bun --filter app tauri:ios:build",
 		"version:sync": "node scripts/sync-version.js",
-		"release": "cd services/app && bun run release",
-		"release:dry-run": "cd services/app && bun run release:dry-run",
+		"release": "semantic-release",
+		"release:dry-run": "semantic-release --dry-run",
 		"release:major": "cd services/app && bun run release:major"
+	},
+	"devDependencies": {
+		"@semantic-release/changelog": "^6.0.3",
+		"@semantic-release/commit-analyzer": "^13.0.1",
+		"@semantic-release/exec": "^7.1.0",
+		"@semantic-release/git": "^10.0.1",
+		"@semantic-release/github": "^12.0.2",
+		"@semantic-release/release-notes-generator": "^14.1.0",
+		"semantic-release": "^25.0.2"
 	}
 }
