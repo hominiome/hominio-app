@@ -38,7 +38,7 @@
 >
 	<button
 		class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-white/70 transition-all duration-200 hover:bg-white/10 hover:text-white/90 active:scale-95"
-		on:click={goHome}
+		onclick={goHome}
 		aria-label="Home"
 	>
 		<img src="/logo_clean.png" alt="Home" class="h-7 w-7 object-contain" />
@@ -46,7 +46,7 @@
 	{#if isViewer}
 		<button
 			class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-white/70 transition-all duration-200 hover:bg-white/10 hover:text-white/90 active:scale-95"
-			on:click={goBack}
+			onclick={goBack}
 			aria-label="Back"
 		>
 			<svg
@@ -64,7 +64,7 @@
 	{#if isAuthenticated}
 		<button
 			class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-none bg-transparent text-white/70 transition-all duration-200 hover:bg-white/10 hover:text-white/90 active:scale-95"
-			on:click={handleSignOut}
+			onclick={handleSignOut}
 			disabled={signingOut}
 			aria-label="Sign Out"
 		>
