@@ -35,6 +35,7 @@ TTL: 300 (or your preferred TTL)
 - Fly.io recommends using CNAME records for custom domains
 - CNAME automatically handles IP address changes if Fly.io migrates infrastructure
 - Let's Encrypt certificate provisioning works seamlessly with CNAME records
+- Same approach used for all other Hominio Fly.io apps (consistent setup)
 
 **DNS Provider Examples:**
 

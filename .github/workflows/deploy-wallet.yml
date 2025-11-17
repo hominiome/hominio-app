@@ -37,9 +37,9 @@ jobs:
             # Set primary region
             flyctl regions set fra --app hominio-wallet || true
             
-            # Allocate IP addresses
+            # Allocate IP addresses (shared IPv4 is free, IPv6 for dual-stack)
             echo "🌐 Allocating IP addresses..."
-            flyctl ips allocate-v4 --app hominio-wallet || true
+            flyctl ips allocate-v4 --app hominio-wallet --shared || true
             flyctl ips allocate-v6 --app hominio-wallet || true
           else
             echo "✅ App hominio-wallet already exists"
