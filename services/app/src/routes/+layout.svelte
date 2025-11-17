@@ -34,26 +34,22 @@
 	});
 </script>
 
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
-
 {#if $session.isPending}
 	<div
-		class="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white"
+		class="flex flex-col justify-center items-center min-h-screen text-white bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900"
 	>
 		<div
-			class="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-white/30 border-t-cyan-400"
+			class="mb-4 w-10 h-10 rounded-full border-4 animate-spin border-white/30 border-t-cyan-400"
 		></div>
 		<p class="m-0 text-lg">Checking authentication...</p>
 	</div>
 {:else if !$session.data?.user && !$page.url.pathname.startsWith('/signin')}
 	<!-- Redirecting... (handled by $effect above) -->
 	<div
-		class="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white"
+		class="flex flex-col justify-center items-center min-h-screen text-white bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900"
 	>
 		<div
-			class="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-white/30 border-t-cyan-400"
+			class="mb-4 w-10 h-10 rounded-full border-4 animate-spin border-white/30 border-t-cyan-400"
 		></div>
 		<p class="m-0 text-lg">Redirecting...</p>
 	</div>
