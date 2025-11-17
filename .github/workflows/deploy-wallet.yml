@@ -2,7 +2,7 @@ name: Deploy Wallet
 
 on:
   workflow_run:
-    workflows: ["Release"]
+    workflows: ['Release']
     types:
       - completed
     branches:
@@ -39,7 +39,7 @@ jobs:
           else
             echo "✅ App hominio-wallet already exists"
           fi
-          
+
           # Always ensure IP addresses are allocated (idempotent - safe to run multiple times)
           echo "🌐 Ensuring IP addresses are allocated..."
           # Check if IPv4 exists, allocate if missing
@@ -49,7 +49,7 @@ jobs:
           else
             echo "   IPv4 address already allocated"
           fi
-          
+
           # Check if IPv6 exists, allocate if missing
           if ! flyctl ips list --app hominio-wallet | grep -q "v6"; then
             echo "   Allocating IPv6 address..."
@@ -67,7 +67,7 @@ jobs:
             echo "   Checking certificate status..."
             flyctl certs list --app hominio-wallet || true
           }
-          
+
           echo ""
           echo "📋 DNS Configuration Required:"
           echo "   Add a CNAME record in your DNS provider:"
@@ -109,7 +109,7 @@ jobs:
           flyctl status --app hominio-wallet
           echo "📋 Recent logs:"
           flyctl logs --app hominio-wallet --no-tail | tail -50
-          
+
       - name: Verify SSL certificate status
         run: |
           echo "🔒 Checking SSL certificate status for wallet.hominio.me..."
@@ -117,4 +117,3 @@ jobs:
             echo "⚠️  Certificate not yet issued. This is normal if DNS hasn't propagated yet."
             echo "   Certificate will be automatically provisioned once DNS CNAME record is configured."
           }
-
