@@ -12,7 +12,12 @@
 	function getApiUrl() {
 		// In production, use api.hominio.me, in development use localhost:4204
 		const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && !window.location.hostname.startsWith('127.0.0.1');
-		const apiDomain = env.PUBLIC_DOMAIN_API || (isProduction ? 'api.hominio.me' : 'localhost:4204');
+		let apiDomain = env.PUBLIC_DOMAIN_API || (isProduction ? 'api.hominio.me' : 'localhost:4204');
+		
+		// Normalize domain: remove protocol if present (handles both https://api.hominio.me and api.hominio.me)
+		apiDomain = apiDomain.replace(/^https?:\/\//, '').replace(/^wss?:\/\//, '');
+		
+		// Determine protocol based on domain
 		const protocol = apiDomain.startsWith('localhost') || apiDomain.startsWith('127.0.0.1') ? 'http' : 'https';
 		return `${protocol}://${apiDomain}`;
 	}
