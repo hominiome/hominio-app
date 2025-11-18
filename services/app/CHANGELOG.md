@@ -1,3 +1,11 @@
+# [0.6.0](https://github.com/hominiome/hominio/compare/v0.5.13...v0.6.0) (2025-11-18)
+
+
+### Features
+
+* add deployment workflows for sync and API services ([5e1a178](https://github.com/hominiome/hominio/commit/5e1a17867db4488a605ece8547ed02ee75041d8a))
+* add Zero sync and API services with Better Auth integration ([f8f88d4](https://github.com/hominiome/hominio/commit/f8f88d4df445a015e5104543f04f7104b0476877))
+
 ## [0.5.13](https://github.com/hominiome/hominio/compare/v0.5.12...v0.5.13) (2025-11-18)
 
 
