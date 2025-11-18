@@ -1,3 +1,10 @@
+## [0.6.2](https://github.com/hominiome/hominio/compare/v0.6.1...v0.6.2) (2025-11-18)
+
+
+### Bug Fixes
+
+* use production API domain instead of localhost in frontend ([7e2c38d](https://github.com/hominiome/hominio/commit/7e2c38deec037ad3bda3f4a970d34d5d2eca0b50))
+
 ## [0.6.1](https://github.com/hominiome/hominio/compare/v0.6.0...v0.6.1) (2025-11-18)
 
 
