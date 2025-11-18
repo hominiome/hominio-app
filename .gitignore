@@ -34,3 +34,11 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Database files (SQLite, Zero replica, etc.)
+*.db
+*.db-shm
+*.db-wal
+*.db-wal2
+**/zero-replica.db*
+**/*.db-journal
