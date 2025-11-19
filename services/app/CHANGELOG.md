@@ -1,3 +1,10 @@
+## [0.7.2](https://github.com/hominiome/hominio/compare/v0.7.1...v0.7.2) (2025-11-19)
+
+
+### Bug Fixes
+
+* resolve @hominio/auth import error in wallet service production build ([4197a4e](https://github.com/hominiome/hominio/commit/4197a4e1771ded524b5ecee8993b53f1523496f9))
+
 ## [0.7.1](https://github.com/hominiome/hominio/compare/v0.7.0...v0.7.1) (2025-11-19)
 
 
