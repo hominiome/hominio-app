@@ -1,3 +1,10 @@
+## [0.10.1](https://github.com/hominiome/hominio/compare/v0.10.0...v0.10.1) (2025-11-20)
+
+
+### Bug Fixes
+
+* update lockfile to sync with package.json dependencies ([33666a8](https://github.com/hominiome/hominio/commit/33666a873d3d3597fb18876bd2e086b2cc5bbef4))
+
 # [0.10.0](https://github.com/hominiome/hominio/compare/v0.9.0...v0.10.0) (2025-11-20)
 
 
