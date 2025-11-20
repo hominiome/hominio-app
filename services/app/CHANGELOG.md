@@ -1,3 +1,10 @@
+## [0.10.5](https://github.com/hominiome/hominio/compare/v0.10.4...v0.10.5) (2025-11-20)
+
+
+### Bug Fixes
+
+* replace hardcoded localhost redirects with env vars in production ([dbe63ab](https://github.com/hominiome/hominio/commit/dbe63ab9682beeeb14ef65e0079c5ac89feb884f))
+
 ## [0.10.4](https://github.com/hominiome/hominio/compare/v0.10.3...v0.10.4) (2025-11-20)
 
 
