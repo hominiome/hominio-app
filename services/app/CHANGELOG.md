@@ -1,3 +1,10 @@
+# [0.8.0](https://github.com/hominiome/hominio/compare/v0.7.2...v0.8.0) (2025-11-20)
+
+
+### Features
+
+* introduced capabilities system ([ab027bb](https://github.com/hominiome/hominio/commit/ab027bb8ab5afb3f8604fbe816eae8ae89fca80d))
+
 ## [0.7.2](https://github.com/hominiome/hominio/compare/v0.7.1...v0.7.2) (2025-11-19)
 
 

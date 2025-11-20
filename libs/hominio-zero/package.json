@@ -1,14 +1,13 @@
 {
-  "name": "@hominio/zero",
-  "version": "0.7.2",
-  "type": "module",
-  "main": "src/index.ts",
-  "exports": {
-    ".": "./src/index.ts"
-  },
-  "dependencies": {
-    "@rocicorp/zero": "^0.24.0",
-    "zod": "^3.23.8"
-  }
+	"name": "@hominio/zero",
+	"version": "0.8.0",
+	"type": "module",
+	"main": "src/index.ts",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"dependencies": {
+		"@rocicorp/zero": "^0.24.0",
+		"zod": "^3.23.8"
+	}
 }
-
