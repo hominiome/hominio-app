@@ -12,47 +12,89 @@
 	let capabilities = $state<Capability[]>([]);
 	let requests = $state<CapabilityRequest[]>([]);
 	let activeTab = $state<'granted' | 'pending'>('granted');
+	let dataLoaded = $state(false);
 
 	$effect(() => {
-		if (!$session.isPending && !$session.data?.user) {
-			// Redirect to sign in if not authenticated
+		// Handle session state changes
+		if ($session.isPending) {
+			// Still loading session
+			return;
+		}
+		
+		if (!$session.data?.user) {
+			// Not authenticated - redirect to sign in
+			loading = false;
 			goto('/?callback=' + encodeURIComponent(window.location.href));
+			return;
+		}
+		
+		// User is authenticated - load data if not already loaded
+		if (!dataLoaded) {
+			loading = true;
+			Promise.all([loadCapabilities(), loadRequests()])
+				.catch((err) => {
+					console.error('[profile] Error loading data:', err);
+					error = err instanceof Error ? err.message : 'Failed to load profile data';
+				})
+				.finally(() => {
+					loading = false;
+					dataLoaded = true;
+				});
 		}
 	});
 
 	async function loadCapabilities() {
-		if (!$session.data?.user) return;
+		if (!$session.data?.user) {
+			console.log('[profile] Cannot load capabilities: no user session');
+			return;
+		}
 		
 		try {
+			console.log('[profile] Loading capabilities...');
 			const response = await fetch('/api/auth/capabilities', {
 				credentials: 'include',
 			});
+			console.log('[profile] Capabilities response status:', response.status);
 			if (!response.ok) {
-				throw new Error('Failed to load capabilities');
+				const errorText = await response.text();
+				console.error('[profile] Capabilities error response:', errorText);
+				throw new Error(`Failed to load capabilities: ${response.status} ${errorText}`);
 			}
 			const data = await response.json();
+			console.log('[profile] Capabilities loaded:', data.capabilities?.length || 0);
 			capabilities = data.capabilities || [];
 		} catch (err) {
-			console.error('Error loading capabilities:', err);
+			console.error('[profile] Error loading capabilities:', err);
 			error = err instanceof Error ? err.message : 'Failed to load capabilities';
 		}
 	}
 
 	async function loadRequests() {
-		if (!$session.data?.user) return;
+		if (!$session.data?.user) {
+			console.log('[profile] Cannot load requests: no user session');
+			return;
+		}
 		
 		try {
+			console.log('[profile] Loading requests...');
 			const response = await fetch('/api/auth/capabilities/requests?status=pending', {
 				credentials: 'include',
 			});
+			console.log('[profile] Requests response status:', response.status);
 			if (!response.ok) {
-				throw new Error('Failed to load requests');
+				const errorText = await response.text();
+				console.error('[profile] Requests error response:', errorText);
+				throw new Error(`Failed to load requests: ${response.status} ${errorText}`);
 			}
 			const data = await response.json();
+			console.log('[profile] Requests loaded:', data.requests?.length || 0);
 			requests = data.requests || [];
 		} catch (err) {
-			console.error('Error loading requests:', err);
-			error = err instanceof Error ? err.message : 'Failed to load requests';
+			console.error('[profile] Error loading requests:', err);
+			// Don't override error if capabilities already set one
+			if (!error) {
+				error = err instanceof Error ? err.message : 'Failed to load requests';
+			}
 		}
 	}
 
@@ -73,13 +115,6 @@
 		}
 	}
 
-	onMount(async () => {
-		if ($session.data?.user) {
-			loading = true;
-			await Promise.all([loadCapabilities(), loadRequests()]);
-			loading = false;
-		}
-	});
 </script>
 
 <div class="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 p-6">
