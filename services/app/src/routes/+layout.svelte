@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.css';
-	import { BackgroundBlobs, LoadingSpinner } from '@hominio/brand';
+	import { BackgroundBlobs, LoadingSpinner, Favicon } from '@hominio/brand';
 	import NavPill from '$lib/components/NavPill.svelte';
 	import { page } from '$app/stores';
 	import { createAuthClient } from '@hominio/auth';
@@ -173,6 +173,8 @@
 		}
 	});
 </script>
+
+<Favicon />
 
 {#if $session.isPending}
 	<div class="flex flex-col justify-center items-center min-h-screen font-sans bg-glass-gradient text-slate-800">

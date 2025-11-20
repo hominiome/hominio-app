@@ -235,12 +235,40 @@ export function createVoiceCallService(options?: { onToolCall?: ToolCallHandler 
 						case 'toolCall':
 							aiState = 'thinking';
 							// Handle tool call on client side
-							if (options?.onToolCall && message.toolName) {
+							// Support multiple formats:
+							// 1. Direct format: {type: 'toolCall', toolName: '...', args: {...}}
+							// 2. Function calls array: {type: 'toolCall', data: {functionCalls: [{name: '...', args: {...}}]}}
+							// 3. Single function call: {type: 'toolCall', data: {name: '...', args: {...}}}
+							
+							let toolName: string | null = null;
+							let toolArgs: any = {};
+							
+							// Format 1: Direct toolName/args
+							if (message.toolName) {
+								toolName = message.toolName;
+								toolArgs = message.args || {};
+							}
+							// Format 2: Function calls array (from Google Live API)
+							else if (message.data?.functionCalls && Array.isArray(message.data.functionCalls) && message.data.functionCalls.length > 0) {
+								const functionCall = message.data.functionCalls[0];
+								toolName = functionCall.name;
+								toolArgs = functionCall.args || {};
+							}
+							// Format 3: Single function call object
+							else if (message.data?.name) {
+								toolName = message.data.name;
+								toolArgs = message.data.args || {};
+							}
+							
+							if (options?.onToolCall && toolName) {
 								try {
-									options.onToolCall(message.toolName, message.args || {});
+									console.log('[VoiceCall] Executing tool call:', toolName, toolArgs);
+									options.onToolCall(toolName, toolArgs);
 								} catch (toolErr) {
 									console.error('[VoiceCall] Tool call handler error:', toolErr);
 								}
+							} else {
+								console.warn('[VoiceCall] Tool call received but no handler or invalid format:', message);
 							}
 							break;
 

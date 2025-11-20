@@ -1,10 +1,9 @@
 <script lang="ts">
 	import '@hominio/brand/app.css';
-	import favicon from '$lib/assets/favicon.svg';
 	import { createAuthClient } from '@hominio/auth';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { NavPill, createVoiceCallService } from '@hominio/brand';
+	import { NavPill, createVoiceCallService, Favicon } from '@hominio/brand';
 	
 	let { children } = $props();
 	
@@ -76,9 +75,7 @@
 	});
 </script>
 
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
+<Favicon />
 
 <NavPill 
 	onHome={goHome}

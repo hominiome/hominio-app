@@ -173,21 +173,20 @@ export const voiceLiveHandler = {
                                         const functionCall = functionCallPart.functionCall;
                                         console.log("[voice/live] Handling function call:", JSON.stringify(functionCall));
 
+                                        // Send tool call to frontend for client-side handling
                                         ws.send(JSON.stringify({
                                             type: "toolCall",
-                                            data: functionCall,
+                                            toolName: functionCall.name,
+                                            args: functionCall.args || {},
                                         }));
 
                                         let response = { error: "Unknown tool" };
                                         if (functionCall.name === "get_name") {
                                             response = { name: "hominio" };
+                                        } else if (functionCall.name === "switchAgent") {
+                                            // switchAgent is handled on the client side
+                                            response = { success: true, message: "Navigating to agent" };
                                         }
-
-                                        // Construct tool response
-                                        // For Multimodal Live, we send toolResponse in clientContent
-                                        // Note: sendToolResponse is not directly on session in some versions, 
-                                        // or requires specific structure. 
-                                        // Based on reference, sendToolResponse takes { functionResponses: [...] }
 
                                         console.log("[voice/live] Sending tool response:", JSON.stringify(response));
 
@@ -196,7 +195,7 @@ export const voiceLiveHandler = {
                                                 {
                                                     id: functionCall.id,
                                                     name: functionCall.name,
-                                                    response: { result: response } // Wrap in 'result' object as per reference
+                                                    response: { result: response }
                                                 }
                                             ]
                                         });
@@ -225,24 +224,56 @@ export const voiceLiveHandler = {
                                 // Handle top-level toolCall (if SDK abstracts it this way)
                                 console.log("[voice/live] Received top-level tool call:", JSON.stringify(message.toolCall));
 
-                                // Notify frontend
-                                ws.send(JSON.stringify({
-                                    type: "toolCall",
-                                    data: message.toolCall,
-                                }));
-
                                 const functionCalls = message.toolCall.functionCalls;
+                                
+                                // Send each tool call to frontend for client-side handling
+                                functionCalls.forEach((fc: any) => {
+                                    ws.send(JSON.stringify({
+                                        type: "toolCall",
+                                        toolName: fc.name,
+                                        args: fc.args || {},
+                                        // Also include data format for compatibility
+                                        data: {
+                                            functionCalls: [{
+                                                name: fc.name,
+                                                args: fc.args || {},
+                                                id: fc.id
+                                            }]
+                                        }
+                                    }));
+                                });
+
+                                // Send success responses back to Google (frontend handles the actual work)
                                 const responses = functionCalls.map((fc: any) => {
-                                    if (fc.name === "get_name") {
+                                    const toolName = fc.name;
+                                    console.log(`[voice/live] 🔧 Processing tool call: "${toolName}"`, JSON.stringify(fc.args));
+                                    
+                                    // Handle known tools
+                                    if (toolName === "get_name") {
+                                        console.log(`[voice/live] ✅ Responding to get_name`);
                                         return {
                                             name: "get_name",
-                                            response: { result: { name: "hominio" } }, // Wrap in result
+                                            response: { result: { name: "hominio" } },
                                             id: fc.id
                                         };
                                     }
+                                    
+                                    if (toolName === "switchAgent") {
+                                        // Frontend handles navigation, just acknowledge success
+                                        const agentId = fc.args?.agentId || 'unknown';
+                                        console.log(`[voice/live] ✅ Handling switchAgent tool call with agentId: "${agentId}"`);
+                                        return {
+                                            name: "switchAgent",
+                                            response: { result: { success: true, message: `Navigated to ${agentId}`, agentId: agentId } },
+                                            id: fc.id
+                                        };
+                                    }
+                                    
+                                    // Unknown tool
+                                    console.warn(`[voice/live] ⚠️ Unknown tool: "${toolName}"`);
                                     return {
-                                        name: fc.name,
-                                        response: { result: { error: "Unknown tool" } }, // Wrap in result
+                                        name: toolName,
+                                        response: { result: { error: `Unknown tool: ${toolName}` } },
                                         id: fc.id
                                     };
                                 });

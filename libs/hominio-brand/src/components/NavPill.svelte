@@ -376,8 +376,8 @@
 	}
 	
 	.call-btn:disabled {
-		opacity: 0.6;
 		cursor: not-allowed;
+		/* Don't reduce opacity - button should stay fully visible during loading */
 	}
 	
 	.call-btn-active {
