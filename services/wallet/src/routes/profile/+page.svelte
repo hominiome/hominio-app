@@ -1,18 +1,17 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { createAuthClient } from '@hominio/auth';
 	import { goto } from '$app/navigation';
-	import type { Capability, CapabilityRequest } from '@hominio/caps';
+	// import type { Capability, CapabilityRequest } from '@hominio/caps';
 
 	const authClient = createAuthClient();
 	const session = authClient.useSession();
 
 	let loading = $state(true);
 	let error = $state<string | null>(null);
-	let capabilities = $state<Capability[]>([]);
-	let requests = $state<CapabilityRequest[]>([]);
-	let activeTab = $state<'granted' | 'pending'>('granted');
-	let dataLoaded = $state(false);
+	// let capabilities = $state<Capability[]>([]);
+	// let requests = $state<CapabilityRequest[]>([]);
+	// let activeTab = $state<'granted' | 'pending'>('granted');
+	// let dataLoaded = $state(false);
 
 	$effect(() => {
 		// Handle session state changes
@@ -28,92 +27,96 @@
 			return;
 		}
 		
-		// User is authenticated - load data if not already loaded
-		if (!dataLoaded) {
-			loading = true;
-			Promise.all([loadCapabilities(), loadRequests()])
-				.catch((err) => {
-					console.error('[profile] Error loading data:', err);
-					error = err instanceof Error ? err.message : 'Failed to load profile data';
-				})
-				.finally(() => {
-					loading = false;
-					dataLoaded = true;
-				});
-		}
+		// User is authenticated - stop loading
+		loading = false;
+		
+		// TODO: Re-enable capabilities loading once API routes are fixed
+		// if (!dataLoaded) {
+		// 	loading = true;
+		// 	Promise.all([loadCapabilities(), loadRequests()])
+		// 		.catch((err) => {
+		// 			console.error('[profile] Error loading data:', err);
+		// 			error = err instanceof Error ? err.message : 'Failed to load profile data';
+		// 		})
+		// 		.finally(() => {
+		// 			loading = false;
+		// 			dataLoaded = true;
+		// 		});
+		// }
 	});
 
-	async function loadCapabilities() {
-		if (!$session.data?.user) {
-			console.log('[profile] Cannot load capabilities: no user session');
-			return;
-		}
-		
-		try {
-			console.log('[profile] Loading capabilities...');
-			const response = await fetch('/api/auth/capabilities', {
-				credentials: 'include',
-			});
-			console.log('[profile] Capabilities response status:', response.status);
-			if (!response.ok) {
-				const errorText = await response.text();
-				console.error('[profile] Capabilities error response:', errorText);
-				throw new Error(`Failed to load capabilities: ${response.status} ${errorText}`);
-			}
-			const data = await response.json();
-			console.log('[profile] Capabilities loaded:', data.capabilities?.length || 0);
-			capabilities = data.capabilities || [];
-		} catch (err) {
-			console.error('[profile] Error loading capabilities:', err);
-			error = err instanceof Error ? err.message : 'Failed to load capabilities';
-		}
-	}
+	// TODO: Re-enable capabilities loading once API routes are fixed
+	// async function loadCapabilities() {
+	// 	if (!$session.data?.user) {
+	// 		console.log('[profile] Cannot load capabilities: no user session');
+	// 		return;
+	// 	}
+	// 	
+	// 	try {
+	// 		console.log('[profile] Loading capabilities...');
+	// 		const response = await fetch('/api/auth/capabilities', {
+	// 			credentials: 'include',
+	// 		});
+	// 		console.log('[profile] Capabilities response status:', response.status);
+	// 		if (!response.ok) {
+	// 			const errorText = await response.text();
+	// 			console.error('[profile] Capabilities error response:', errorText);
+	// 			throw new Error(`Failed to load capabilities: ${response.status} ${errorText}`);
+	// 		}
+	// 		const data = await response.json();
+	// 		console.log('[profile] Capabilities loaded:', data.capabilities?.length || 0);
+	// 		capabilities = data.capabilities || [];
+	// 	} catch (err) {
+	// 		console.error('[profile] Error loading capabilities:', err);
+	// 		error = err instanceof Error ? err.message : 'Failed to load capabilities';
+	// 	}
+	// }
 
-	async function loadRequests() {
-		if (!$session.data?.user) {
-			console.log('[profile] Cannot load requests: no user session');
-			return;
-		}
-		
-		try {
-			console.log('[profile] Loading requests...');
-			const response = await fetch('/api/auth/capabilities/requests?status=pending', {
-				credentials: 'include',
-			});
-			console.log('[profile] Requests response status:', response.status);
-			if (!response.ok) {
-				const errorText = await response.text();
-				console.error('[profile] Requests error response:', errorText);
-				throw new Error(`Failed to load requests: ${response.status} ${errorText}`);
-			}
-			const data = await response.json();
-			console.log('[profile] Requests loaded:', data.requests?.length || 0);
-			requests = data.requests || [];
-		} catch (err) {
-			console.error('[profile] Error loading requests:', err);
-			// Don't override error if capabilities already set one
-			if (!error) {
-				error = err instanceof Error ? err.message : 'Failed to load requests';
-			}
-		}
-	}
+	// async function loadRequests() {
+	// 	if (!$session.data?.user) {
+	// 		console.log('[profile] Cannot load requests: no user session');
+	// 		return;
+	// 	}
+	// 	
+	// 	try {
+	// 		console.log('[profile] Loading requests...');
+	// 		const response = await fetch('/api/auth/capabilities/requests?status=pending', {
+	// 			credentials: 'include',
+	// 		});
+	// 		console.log('[profile] Requests response status:', response.status);
+	// 		if (!response.ok) {
+	// 			const errorText = await response.text();
+	// 			console.error('[profile] Requests error response:', errorText);
+	// 			throw new Error(`Failed to load requests: ${response.status} ${errorText}`);
+	// 		}
+	// 		const data = await response.json();
+	// 		console.log('[profile] Requests loaded:', data.requests?.length || 0);
+	// 		requests = data.requests || [];
+	// 	} catch (err) {
+	// 		console.error('[profile] Error loading requests:', err);
+	// 		// Don't override error if capabilities already set one
+	// 		if (!error) {
+	// 			error = err instanceof Error ? err.message : 'Failed to load requests';
+	// 		}
+	// 	}
+	// }
 
-	async function revokeCapability(capabilityId: string) {
-		try {
-			const response = await fetch(`/api/auth/capabilities/${capabilityId}`, {
-				method: 'DELETE',
-				credentials: 'include',
-			});
-			if (!response.ok) {
-				throw new Error('Failed to revoke capability');
-			}
-			// Reload capabilities
-			await loadCapabilities();
-		} catch (err) {
-			console.error('Error revoking capability:', err);
-			error = err instanceof Error ? err.message : 'Failed to revoke capability';
-		}
-	}
+	// async function revokeCapability(capabilityId: string) {
+	// 	try {
+	// 		const response = await fetch(`/api/auth/capabilities/${capabilityId}`, {
+	// 			method: 'DELETE',
+	// 			credentials: 'include',
+	// 		});
+	// 		if (!response.ok) {
+	// 			throw new Error('Failed to revoke capability');
+	// 		}
+	// 		// Reload capabilities
+	// 		await loadCapabilities();
+	// 	} catch (err) {
+	// 		console.error('Error revoking capability:', err);
+	// 		error = err instanceof Error ? err.message : 'Failed to revoke capability';
+	// 	}
+	// }
 
 </script>
 
@@ -187,11 +190,11 @@
 				</div>
 			</div>
 
+			<!-- TODO: Re-enable Capabilities Section once API routes are fixed -->
 			<!-- Capabilities Section -->
-			<div class="mb-8">
+			<!-- <div class="mb-8">
 				<h2 class="mb-6 text-2xl font-bold text-white">Capabilities</h2>
 
-				<!-- Tabs -->
 				<div class="mb-6 flex gap-4 border-b border-white/10">
 					<button
 						onclick={() => (activeTab = 'granted')}
@@ -212,7 +215,6 @@
 				</div>
 
 				{#if activeTab === 'granted'}
-					<!-- My Capabilities Tab -->
 					<div class="space-y-4">
 						{#if capabilities.length === 0}
 							<div class="rounded-lg border border-white/10 bg-white/5 p-8 text-center text-white/60">
@@ -255,7 +257,6 @@
 						{/if}
 					</div>
 				{:else}
-					<!-- Pending Requests Tab -->
 					<div class="space-y-4">
 						{#if requests.length === 0}
 							<div class="rounded-lg border border-white/10 bg-white/5 p-8 text-center text-white/60">
@@ -303,7 +304,7 @@
 						{/if}
 					</div>
 				{/if}
-			</div>
+			</div> -->
 		{/if}
 	</div>
 </div>
