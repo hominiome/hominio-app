@@ -1,3 +1,16 @@
+# [0.10.0](https://github.com/hominiome/hominio/compare/v0.9.0...v0.10.0) (2025-11-20)
+
+
+### Bug Fixes
+
+* update lockfile for API service deployment ([3e948c8](https://github.com/hominiome/hominio/commit/3e948c8d6c67648e940703ce03249749a88e8136))
+
+
+### Features
+
+* add logout button to profile and auto-routing for auth state ([4b020a5](https://github.com/hominiome/hominio/commit/4b020a5cfb191dfc9fd4a820fa94a1fc52ef344c))
+* restyle app service with light liquid glass design ([46e9d46](https://github.com/hominiome/hominio/commit/46e9d467a1e90098ff8fa03ec63e07236fd11b4e))
+
 # [0.9.0](https://github.com/hominiome/hominio/compare/v0.8.0...v0.9.0) (2025-11-20)
 
 
