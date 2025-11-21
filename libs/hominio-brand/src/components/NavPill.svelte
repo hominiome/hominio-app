@@ -307,7 +307,6 @@
 			<!-- Left: Logo - Links to app service -->
 			<a href={getAppUrl()} class="nav-logo-link" aria-label="Go to app">
 				<img src="/brand/logo_clean.png" alt="Home" class="nav-logo" />
-				<span class="nav-logo-text">Back to App</span>
 			</a>
 			
 			<!-- Center: Call Button -->
@@ -595,7 +594,7 @@
 		display: grid;
 		grid-template-columns: 1fr auto 1fr;
 		align-items: center;
-		gap: 0.1875rem;
+		gap: 0.5rem;
 		padding: 0;
 		min-height: 42px; /* Bit taller to accommodate larger buttons */
 	}
@@ -604,11 +603,10 @@
 	.nav-logo-link {
 		display: flex;
 		align-items: center;
-		justify-content: flex-start;
-		gap: 0.5rem;
+		justify-content: center;
 		background: transparent;
 		cursor: pointer;
-		padding: 0.375rem; /* Slightly more padding */
+		padding: 0.5rem;
 		border-radius: 50%;
 		transition: all 0.2s;
 		text-decoration: none;
@@ -620,18 +618,10 @@
 	}
 	
 	.nav-logo {
-		width: 34px; /* Bit larger */
-		height: 34px;
+		width: 38px;
+		height: 38px;
 		border-radius: 50%;
 		flex-shrink: 0;
-	}
-	
-	.nav-logo-text {
-		display: none; /* Hidden on desktop */
-		font-size: 0.75rem;
-		font-weight: 500;
-		color: rgba(255, 255, 255, 0.9);
-		white-space: nowrap;
 	}
 	
 	/* Center Call Button - Larger and overhanging */
@@ -701,10 +691,10 @@
 	.nav-user-link {
 		display: flex;
 		align-items: center;
-		justify-content: flex-end;
+		justify-content: center;
 		background: transparent;
 		cursor: pointer;
-		padding: 0.375rem; /* Slightly more padding */
+		padding: 0.5rem;
 		border-radius: 50%;
 		transition: all 0.2s;
 		text-decoration: none;
@@ -716,14 +706,14 @@
 	}
 	
 	.nav-avatar {
-		width: 34px; /* Bit larger */
-		height: 34px;
+		width: 38px;
+		height: 38px;
 		border-radius: 50%;
 	}
 	
 	.nav-avatar-placeholder {
-		width: 34px;
-		height: 34px;
+		width: 38px;
+		height: 38px;
 		border-radius: 50%;
 		background: linear-gradient(135deg, #4ecdc4, #f4d03f);
 		display: flex;
@@ -861,28 +851,23 @@
 		}
 		
 		.nav-logo-link {
-			padding: 0.3125rem 0.5rem;
-			border-radius: 9999px;
-		}
-		
-		.nav-logo-text {
-			display: block; /* Show text on mobile */
+			padding: 0.5rem;
 		}
 		
 		.nav-user-link {
-			padding: 0.3125rem;
+			padding: 0.5rem;
 		}
 		
 		.nav-logo {
-			width: 30px;
-			height: 30px;
+			width: 38px;
+			height: 38px;
 		}
 		
 		.nav-avatar,
 		.nav-avatar-placeholder {
-			width: 30px;
-			height: 30px;
-			font-size: 0.75rem;
+			width: 38px;
+			height: 38px;
+			font-size: 0.875rem;
 		}
 		
 		.connection-modal {

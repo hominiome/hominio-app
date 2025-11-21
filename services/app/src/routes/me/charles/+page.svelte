@@ -488,7 +488,7 @@
 	.nav-action-button-icon {
 		width: 1.5rem;
 		height: 1.5rem;
-		color: white;
+		color: var(--color-primary-50);
 	}
 </style>
 
