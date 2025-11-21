@@ -1,3 +1,17 @@
+## [0.12.15](https://github.com/hominiome/hominio/compare/v0.12.14...v0.12.15) (2025-11-21)
+
+
+### Bug Fixes
+
+* enforce truly fixed width for pricing section using CSS with !important ([2d08ca1](https://github.com/hominiome/hominio/commit/2d08ca19f73a8c7c5a0eecb193adfa474ddb8014))
+* ensure pricing section has fixed width across all items ([a62f46c](https://github.com/hominiome/hominio/commit/a62f46cfdf5aed1e8b6510ac99c81adea6939f20))
+* make quantity label even smaller for better proportion ([f975adb](https://github.com/hominiome/hominio/commit/f975adb12231d7ec9c3de193e11fb518d6ed9b35))
+* make quantity label same size as description and consistent across views ([8e9cc4a](https://github.com/hominiome/hominio/commit/8e9cc4aae14db2a50e693fede381ed15a0f50a25))
+* remove GlassCard wrapper on mobile, keep on tablet/desktop ([8a8c544](https://github.com/hominiome/hominio/commit/8a8c544ac04024e7af810ff42815d032a1e3bbc0))
+* remove menu wrapper padding, category icons, and make pricing more compact ([f0a9528](https://github.com/hominiome/hominio/commit/f0a9528715ec237dc8c2fe7a9703fd934e3c6540))
+* remove space between price and euro symbol ([3d671c2](https://github.com/hominiome/hominio/commit/3d671c28830cf446495ad61a2711da84acff6e7a))
+* remove wrapper styling, fix quantity label size, and make price box responsive ([f93f147](https://github.com/hominiome/hominio/commit/f93f147d4358f47aedb1f2f891a155d76a9b18ed))
+
 ## [0.12.14](https://github.com/hominiome/hominio/compare/v0.12.13...v0.12.14) (2025-11-21)
 
 
