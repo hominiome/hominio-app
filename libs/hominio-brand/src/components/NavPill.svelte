@@ -559,13 +559,13 @@
 	}
 	
 	.call-btn-active {
-		background: #dc2626; /* Alert error text color - red-600 */
+		background: #b91c1c; /* Alert error color - red-700 (darker, more prominent) */
 		border: 3px solid rgba(254, 202, 202, 1); /* Alert error border - red-100 */
 	}
 	
 	.call-btn-active:hover:not(:disabled) {
-		background: #b91c1c; /* Darker red-700 on hover */
-		box-shadow: 0 12px 24px rgba(220, 38, 38, 0.4);
+		background: #991b1b; /* Darker red-800 on hover */
+		box-shadow: 0 12px 24px rgba(185, 28, 28, 0.4);
 		transform: translateY(-2px) scale(1.05);
 	}
 	
