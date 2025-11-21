@@ -1,3 +1,10 @@
+## [0.12.6](https://github.com/hominiome/hominio/compare/v0.12.5...v0.12.6) (2025-11-21)
+
+
+### Bug Fixes
+
+* add --admin-password flag using ZERO_ADMIN_AUTH secret ([56139ba](https://github.com/hominiome/hominio/commit/56139ba32f3144a23abbff9d450c619baf9375d5))
+
 ## [0.12.5](https://github.com/hominiome/hominio/compare/v0.12.4...v0.12.5) (2025-11-21)
 
 
