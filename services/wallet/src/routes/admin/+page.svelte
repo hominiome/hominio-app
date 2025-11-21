@@ -75,10 +75,15 @@
         if (!walletDomain) {
             if (isProduction) {
                 const hostname = window.location.hostname;
-                if (hostname.startsWith("app.")) {
+                // If already on wallet domain, use it directly
+                if (hostname.startsWith("wallet.")) {
+                    walletDomain = hostname;
+                } else if (hostname.startsWith("app.")) {
                     walletDomain = hostname.replace("app.", "wallet.");
                 } else {
-                    walletDomain = `wallet.${hostname.replace(/^www\./, "")}`;
+                    // Extract root domain and prepend wallet.
+                    const rootDomain = hostname.replace(/^www\./, "");
+                    walletDomain = `wallet.${rootDomain}`;
                 }
             } else {
                 walletDomain = "localhost:4201";
