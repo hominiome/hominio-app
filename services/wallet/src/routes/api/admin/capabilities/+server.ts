@@ -8,7 +8,11 @@ export const GET: RequestHandler = async ({ request }) => {
         await requireAdmin(request);
 
         // Get all capabilities
-        const capabilities = await getAllCapabilities();
+        const allCapabilities = await getAllCapabilities();
+
+        // Filter out group capabilities - they're managed through groups, not directly
+        // Group capabilities have principal like "group:hominio-explorer"
+        const capabilities = allCapabilities.filter(cap => !cap.principal.startsWith('group:'));
 
         // Extract user IDs from capabilities
         const capabilityUserIds = capabilities
