@@ -172,6 +172,7 @@
 
 		let hotelsView: any;
 		let schemasView: any;
+		let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
 		(async () => {
 			// Wait for Zero to be ready
@@ -227,7 +228,26 @@
 				const hotelsQuery = allDataBySchema(foundHotelSchemaId);
 				hotelsView = zero.materialize(hotelsQuery);
 
+				// Set a timeout to prevent forever-spinning loading state
+				// If no data arrives within 5 seconds, assume user doesn't have access or no data
+				let hasReceivedData = false;
+
+				timeoutId = setTimeout(() => {
+					if (!hasReceivedData && loading) {
+						console.log('[Charles] Hotels query timeout - user may not have access or no data available');
+						loading = false;
+						// Don't set error - let it show empty state message
+						// The listener will still fire when data arrives (even if empty)
+					}
+				}, 5000);
+
 				hotelsView.addListener((data: any) => {
+					hasReceivedData = true;
+					if (timeoutId) {
+						clearTimeout(timeoutId);
+						timeoutId = null;
+					}
+					
 					const newHotels = Array.from(data || []);
 					console.log('[Charles] Hotels data received:', newHotels.length, 'hotels');
 					console.log('[Charles] Hotels:', newHotels);
@@ -249,6 +269,10 @@
 			window.removeEventListener('actionSkill', handleActionSkillEvent as EventListener);
 			if (hotelsView) hotelsView.destroy();
 			if (schemasView) schemasView.destroy();
+			// Clear any pending timeouts
+			if (timeoutId) {
+				clearTimeout(timeoutId);
+			}
 		};
 	});
 

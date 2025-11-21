@@ -67,25 +67,11 @@ export const voiceLiveHandler = {
 
         let authData: AuthData | null = null;
         if (request) {
-            // Log request details for debugging
-            const cookieHeader = request.headers.get("cookie");
-            const origin = request.headers.get("origin");
-            console.log(`[voice/live] 🔍 WebSocket upgrade request details:`, {
-                hasCookies: !!cookieHeader,
-                cookieCount: cookieHeader ? cookieHeader.split(';').length : 0,
-                origin: origin || 'missing',
-                url: request.url
-            });
-            
             try {
                 authData = await requireWebSocketAuth(request);
-            } catch (error: any) {
+            } catch (error) {
                 console.error("[voice/live] Authentication failed:", error);
-                console.error("[voice/live] Error details:", {
-                    message: error?.message,
-                    stack: error?.stack
-                });
-                ws.close(1008, `Authentication failed: ${error?.message || "Unauthorized"}`);
+                ws.close(1008, "Authentication failed: Unauthorized");
                 return;
             }
         } else {
@@ -104,42 +90,22 @@ export const voiceLiveHandler = {
         console.log(`[voice/live] 🔍 Checking capability for user ${authData.sub} (principal: ${principal})`);
 
         let hasVoiceCapability = false;
-        let capabilityError: any = null;
         try {
-            // Add timeout to prevent hanging (5 seconds)
-            const capabilityCheckPromise = checkCapability(
+            hasVoiceCapability = await checkCapability(
                 principal,
                 { type: 'api', namespace: 'voice' },
                 'read'
             );
-            const timeoutPromise = new Promise<boolean>((_, reject) => 
-                setTimeout(() => reject(new Error('Capability check timeout after 5 seconds')), 5000)
-            );
-            
-            hasVoiceCapability = await Promise.race([
-                capabilityCheckPromise,
-                timeoutPromise
-            ]) as boolean;
             console.log(`[voice/live] 🔍 Capability check result: ${hasVoiceCapability}`);
-        } catch (error: any) {
+        } catch (error) {
             console.error(`[voice/live] ❌ Error checking capability:`, error);
-            console.error(`[voice/live] ❌ Error details:`, {
-                message: error?.message,
-                stack: error?.stack,
-                name: error?.name
-            });
-            capabilityError = error;
             // Default deny on error
             hasVoiceCapability = false;
         }
 
         if (!hasVoiceCapability) {
-            const errorMessage = capabilityError 
-                ? `Capability check failed: ${capabilityError.message || capabilityError}. Please check database connection and ensure WALLET_POSTGRES_SECRET is set.`
-                : `No api:voice capability. Access denied by default. Please contact an administrator to grant access.`;
             console.log(`[voice/live] ❌ BLOCKED WebSocket connection - user ${authData.sub} does not have api:voice capability`);
-            console.log(`[voice/live] ❌ Error details:`, capabilityError);
-            ws.close(1008, errorMessage);
+            ws.close(1008, "Forbidden: No api:voice capability. Access denied by default.");
             return;
         }
 
@@ -712,4 +678,3 @@ ${dataContextString ? `\nHintergrundwissen:\n${dataContextString}` : ''}`;
         }
     },
 };
-
