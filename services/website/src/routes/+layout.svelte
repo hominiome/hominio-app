@@ -69,7 +69,7 @@
 	// Determine CTA text and href based on auth status
 	const ctaText = $derived.by(() => {
 		if ($session.data?.user) {
-			return 'Open App';
+			return 'Go To App';
 		}
 		return 'Sign up to waitlist now';
 	});

@@ -89,7 +89,94 @@
 	}
 </script>
 
-{#if isAuthenticated}
+{#if pillState === 'hidden'}
+	<!-- Hidden state - render nothing -->
+{:else if pillState === 'cta'}
+	<!-- CTA State: Show modals if authenticated, then show CTA buttons -->
+	{#if isAuthenticated}
+		<!-- Capability Modal (shown when user doesn't have voice capability) -->
+		{#if showCapabilityModal}
+			<div class="connection-modal modal-capability">
+				<div class="connection-content">
+					<div class="connection-icon">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M12,1L8,5H11V14H13V5H16M18,23H6C4.89,23 4,22.1 4,21V9A2,2 0 0,1 6,7H9V9H6V21H18V9H15V7H18A2,2 0 0,1 20,9V21A2,2 0 0,1 18,23Z" />
+						</svg>
+					</div>
+					<div class="connection-text-group">
+						<p class="connection-text">Access required</p>
+						<p class="connection-subtext">You need permission to use the voice assistant</p>
+					</div>
+					<button onclick={onRequestAccess} class="request-access-btn">
+						Request access
+					</button>
+					<button onclick={onCloseCapabilityModal} class="close-modal-btn" aria-label="Close">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+						</svg>
+					</button>
+				</div>
+			</div>
+		{/if}
+
+		<!-- Connection State Modal (shown when call is active) -->
+		{#if isCallActive || isConnecting || isWaitingForPermission}
+			<div class="connection-modal" class:modal-waiting={isWaitingForPermission} class:modal-connecting={isConnecting} class:modal-listening={isCallActive && aiState === 'listening'} class:modal-thinking={isCallActive && aiState === 'thinking'} class:modal-speaking={isCallActive && aiState === 'speaking'}>
+				<div class="connection-content">
+					{#if isWaitingForPermission}
+						<div class="connection-icon">
+							<svg class="spinner" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke-linecap="round"/>
+							</svg>
+						</div>
+						<p class="connection-text">Waiting for permission...</p>
+					{:else if isConnecting}
+						<p class="connection-text">Connecting...</p>
+					{:else if isCallActive}
+						{#if aiState === 'thinking'}
+							<div class="connection-icon pulse">
+								<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+									<path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M7.5,8A1.5,1.5 0 0,1 9,9.5A1.5,1.5 0 0,1 7.5,11A1.5,1.5 0 0,1 6,9.5A1.5,1.5 0 0,1 7.5,8M12,8A1.5,1.5 0 0,1 13.5,9.5A1.5,1.5 0 0,1 12,11A1.5,1.5 0 0,1 10.5,9.5A1.5,1.5 0 0,1 12,8M16.5,8A1.5,1.5 0 0,1 18,9.5A1.5,1.5 0 0,1 16.5,11A1.5,1.5 0 0,1 15,9.5A1.5,1.5 0 0,1 16.5,8Z" />
+								</svg>
+							</div>
+							<p class="connection-text">Thinking...</p>
+						{:else if aiState === 'speaking'}
+							<div class="connection-icon pulse">
+								<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+									<path d="M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.84 14,18.7V20.77C18,19.86 21,16.28 21,12C21,7.72 18,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16C15.5,15.29 16.5,13.76 16.5,12M3,9V15H7L12,20V4L7,9H3Z" />
+								</svg>
+							</div>
+							<p class="connection-text">Speaking...</p>
+						{:else}
+							<div class="connection-icon pulse">
+								<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+									<path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" />
+								</svg>
+							</div>
+							<p class="connection-text">Listening...</p>
+						{/if}
+					{/if}
+				</div>
+			</div>
+		{/if}
+	{/if}
+	
+	<!-- CTA State: Two separate buttons - Sign up and Login (no wrapper) -->
+	<div class="cta-buttons-container">
+		<a href={ctaHref || getWalletUrl()} class="cta-btn">
+			<span>{ctaText}</span>
+		</a>
+		{#if showLoginButton}
+		<a href={getWalletUrl('/')} class="cta-login-btn" aria-label="Sign in">
+			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+				<polyline points="10 17 15 12 10 7"/>
+				<line x1="15" y1="12" x2="3" y2="12"/>
+			</svg>
+		</a>
+		{/if}
+	</div>
+{:else if isAuthenticated}
 	<!-- Capability Modal (shown when user doesn't have voice capability) -->
 	{#if showCapabilityModal}
 		<div class="connection-modal modal-capability">
@@ -220,24 +307,6 @@
 			</a>
 		</div>
 	</nav>
-{:else if pillState === 'hidden'}
-	<!-- Hidden state - render nothing -->
-{:else if pillState === 'cta'}
-	<!-- CTA State: Two separate buttons - Sign up and Login (no wrapper) -->
-	<div class="cta-buttons-container">
-		<a href={ctaHref || getWalletUrl()} class="cta-btn">
-			<span>{ctaText}</span>
-		</a>
-		{#if showLoginButton}
-		<a href={getWalletUrl('/')} class="cta-login-btn" aria-label="Sign in">
-			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-				<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-				<polyline points="10 17 15 12 10 7"/>
-				<line x1="15" y1="12" x2="3" y2="12"/>
-			</svg>
-		</a>
-		{/if}
-	</div>
 {:else}
 	<!-- Not authenticated: Google Sign-in Button -->
 	<nav class="nav-pill nav-pill-signin">
@@ -585,7 +654,7 @@
 		border-radius: 9999px;
 		border: 1px solid rgba(0, 26, 66, 0.9); /* Primary 800 */
 		background-color: #001a42; /* Primary 800 - buttons and navpill bg */
-		color: #c4d4ed; /* Primary 100 - button text/label color (lighter) */
+		color: #e6ecf7; /* Primary 50 - button text/label color */
 		padding: 0.75rem 1.5rem;
 		font-weight: 500;
 		font-size: 0.875rem;
@@ -601,7 +670,7 @@
 	.cta-btn:hover {
 		border-color: rgba(0, 38, 98, 0.9); /* Primary 700 */
 		background-color: #002662; /* Primary 700 - button hover */
-		color: #c4d4ed; /* Primary 100 - keep text color */
+		color: #e6ecf7; /* Primary 50 - keep text color */
 		box-shadow: 0 4px 8px -1px rgb(0 0 0 / 0.12);
 		transform: translateY(-1px);
 	}
@@ -615,7 +684,7 @@
 		border-radius: 50%; /* Keep fully circular */
 		border: 1px solid rgba(0, 26, 66, 0.9); /* Primary 800 - same as cta-btn */
 		background-color: #001a42; /* Primary 800 - same as cta-btn */
-		color: #c4d4ed; /* Primary 100 - button text/label color (lighter) */
+		color: #e6ecf7; /* Primary 50 - button text/label color */
 		transition: all 0.2s;
 		cursor: pointer;
 		text-decoration: none;
@@ -627,7 +696,7 @@
 	.cta-login-btn:hover {
 		background-color: #002662; /* Primary 700 - button hover */
 		border-color: rgba(0, 38, 98, 0.9); /* Primary 700 */
-		color: #c4d4ed; /* Primary 100 - keep text color */
+		color: #e6ecf7; /* Primary 50 - keep text color */
 		transform: scale(1.05);
 	}
 	
@@ -640,7 +709,7 @@
 		border-radius: 9999px;
 		border: 1px solid rgba(0, 26, 66, 0.9); /* Primary 800 */
 		background-color: #001a42; /* Primary 800 - buttons bg */
-		color: #c4d4ed; /* Primary 100 - button text/label color (lighter) */
+		color: #e6ecf7; /* Primary 50 - button text/label color */
 		padding: 0.75rem 1.5rem;
 		font-weight: 500;
 		font-size: 0.875rem;
@@ -654,7 +723,7 @@
 	.signin-btn:hover {
 		border-color: rgba(0, 38, 98, 0.9); /* Primary 700 */
 		background-color: #002662; /* Primary 700 - button hover */
-		color: #c4d4ed; /* Primary 100 - keep text color */
+		color: #e6ecf7; /* Primary 50 - keep text color */
 		box-shadow: 0 4px 8px -1px rgb(0 0 0 / 0.12);
 		transform: translateY(-1px);
 	}
