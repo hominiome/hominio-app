@@ -1,3 +1,10 @@
+# [0.12.0](https://github.com/hominiome/hominio/compare/v0.11.5...v0.12.0) (2025-11-21)
+
+
+### Features
+
+* add flexible schema system with hotels and admin CRUD UI ([cb84548](https://github.com/hominiome/hominio/commit/cb845485b50c3f70481a4241a949749bef412afb))
+
 ## [0.11.5](https://github.com/hominiome/hominio/compare/v0.11.4...v0.11.5) (2025-11-21)
 
 
