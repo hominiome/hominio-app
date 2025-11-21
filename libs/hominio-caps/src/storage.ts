@@ -3,10 +3,10 @@
  * Uses wallet PostgreSQL database (BetterAuth database)
  */
 
-import { Kysely } from 'kysely';
+import { Kysely, sql } from 'kysely';
 import { NeonDialect } from 'kysely-neon';
 import { neon } from '@neondatabase/serverless';
-import type { Capability, CapabilityRequest, Principal, Resource, Action } from './types';
+import type { Capability, CapabilityRequest, CapabilityRequestStatus, Principal, Resource, Action } from './types';
 
 // Database types
 interface CapabilitiesTable {
@@ -128,6 +128,20 @@ export async function getCapabilities(principal: Principal): Promise<Capability[
 }
 
 /**
+ * Get all capabilities (admin function - no principal filter)
+ */
+export async function getAllCapabilities(): Promise<Capability[]> {
+  const db = getDb();
+  const rows = await db
+    .selectFrom('capabilities')
+    .selectAll()
+    .orderBy('created_at', 'desc')
+    .execute();
+
+  return rows.map(rowToCapability);
+}
+
+/**
  * Get capability by ID
  */
 export async function getCapability(capabilityId: string): Promise<Capability | null> {
@@ -160,6 +174,7 @@ export async function createCapability(
   const row = await db
     .insertInto('capabilities')
     .values({
+      id: sql`gen_random_uuid()`,
       principal,
       resource_type: resource.type,
       resource_namespace: resource.namespace,
@@ -210,6 +225,23 @@ export async function getCapabilityRequests(ownerId: string, status?: Capability
 }
 
 /**
+ * Get all capability requests (admin function - no owner filter)
+ */
+export async function getAllCapabilityRequests(status?: CapabilityRequestStatus): Promise<CapabilityRequest[]> {
+  const db = getDb();
+  let query = db
+    .selectFrom('capability_requests')
+    .selectAll();
+
+  if (status) {
+    query = query.where('status', '=', status);
+  }
+
+  const rows = await query.orderBy('created_at', 'desc').execute();
+  return rows.map(rowToCapabilityRequest);
+}
+
+/**
  * Get capability request by ID
  */
 export async function getCapabilityRequest(requestId: string): Promise<CapabilityRequest | null> {
@@ -240,6 +272,7 @@ export async function createCapabilityRequest(
   const row = await db
     .insertInto('capability_requests')
     .values({
+      id: sql`gen_random_uuid()`,
       requester_principal: requesterPrincipal,
       resource_type: resource.type,
       resource_namespace: resource.namespace,

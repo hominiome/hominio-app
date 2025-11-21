@@ -15,6 +15,7 @@
 	let capabilities = $state<Capability[]>([]);
 	let capabilitiesLoading = $state(true);
 	let capabilitiesError = $state<string | null>(null);
+	let now = $state(new Date());
 
 	$effect(() => {
 		// Handle session state changes
@@ -35,6 +36,38 @@
 			loadCapabilities();
 		}
 	});
+
+	// Update time every second for countdown
+	$effect(() => {
+		const interval = setInterval(() => {
+			now = new Date();
+		}, 1000);
+		return () => clearInterval(interval);
+	});
+
+	function formatTimeRemaining(expiresAt: string): { value: number; unit: 'd' | 'h' | 'm' | 's' } {
+		const expires = new Date(expiresAt);
+		const diff = expires.getTime() - now.getTime();
+		
+		if (diff <= 0) {
+			return { value: 0, unit: 's' };
+		}
+		
+		const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+		const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+		const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+		const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+		
+		if (days > 0) {
+			return { value: days, unit: 'd' };
+		} else if (hours > 0) {
+			return { value: hours, unit: 'h' };
+		} else if (minutes > 0) {
+			return { value: minutes, unit: 'm' };
+		} else {
+			return { value: seconds, unit: 's' };
+		}
+	}
 
 	async function handleSignOut() {
 		signingOut = true;
@@ -191,26 +224,26 @@
 				{:else}
 					<div class="grid gap-3 grid-cols-1">
 						{#each capabilities as capability (capability.id)}
-							<GlassCard class="p-4">
-								<div class="flex items-start justify-between gap-4">
+							<GlassCard class="capability-card">
+								<div class="capability-header">
 									<!-- Left: Title and Description -->
-									<div class="flex-1 min-w-0 flex flex-col justify-start">
+									<div class="capability-title-section">
 										{#if capability.title}
-											<h3 class="text-lg font-semibold leading-tight" style="color: var(--color-primary-700);">{capability.title}</h3>
+											<h3 class="capability-title">{capability.title}</h3>
 										{/if}
 										{#if capability.description}
-											<p class="mt-0.5 text-sm text-slate-600 leading-tight">
+											<p class="capability-description">
 												{capability.description} - GRANTED {new Date(capability.created_at).toLocaleDateString('de-DE', { month: 'short', day: 'numeric' })}
 											</p>
 										{:else}
-											<p class="mt-0.5 text-sm text-slate-500 italic">
+											<p class="capability-description">
 												No description - GRANTED {new Date(capability.created_at).toLocaleDateString('de-DE', { month: 'short', day: 'numeric' })}
 											</p>
 										{/if}
 									</div>
 									
 									<!-- Right: All Metadata (value first, then label) -->
-									<div class="shrink-0 text-right flex flex-col justify-start" style="gap: 0.25rem;">
+									<div class="capability-metadata">
 										<div class="flex items-center justify-end gap-2">
 											<p class="font-mono text-xs text-slate-900">{formatResource(capability)}</p>
 											<span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Resource</span>
@@ -225,18 +258,21 @@
 											</div>
 											<span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Actions</span>
 										</div>
-										{#if capability.conditions?.expiresAt}
-											<div class="flex items-center justify-end gap-2">
-												<p class="text-xs text-slate-600">
-													{new Date(capability.conditions.expiresAt).toLocaleDateString('de-DE', { 
-														month: 'short', 
-														day: 'numeric' 
-													})}
-												</p>
-												<span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Expires</span>
-											</div>
-										{/if}
 									</div>
+									
+									<!-- Right: Expiration Countdown (Full Height, All the way right) -->
+									{#if capability.conditions?.expiresAt}
+										{@const expiration = formatTimeRemaining(capability.conditions.expiresAt)}
+										<div class="capability-expiration">
+											<div class="expiration-value">
+												<span class="expiration-time">
+													<span class="expiration-number">{expiration.value}</span>
+													<span class="expiration-unit">{expiration.unit}</span>
+												</span>
+												<span class="expiration-label">expires in</span>
+											</div>
+										</div>
+									{/if}
 								</div>
 							</GlassCard>
 						{/each}
@@ -246,3 +282,191 @@
 		{/if}
 	</div>
 </div>
+
+<style>
+	
+	.capability-header {
+		display: flex;
+		align-items: stretch;
+		width: 100%;
+	}
+	
+	.capability-title-section {
+		flex: 1;
+		min-width: 0;
+		padding: 1rem 1.25rem;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		gap: 0.25rem;
+	}
+	
+	.capability-title {
+		font-size: 1.125rem;
+		font-weight: 700;
+		color: var(--color-primary-700);
+		line-height: 1.25;
+		margin: 0;
+	}
+	
+	.capability-description {
+		font-size: 0.875rem;
+		color: #64748b;
+		line-height: 1.5;
+		margin: 0;
+	}
+	
+	.capability-expiration {
+		display: flex;
+		align-items: stretch;
+		justify-content: stretch;
+		background: var(--color-warning-100);
+		border-left: 1px solid var(--color-warning-300);
+		min-width: 120px;
+	}
+	
+	.expiration-value {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		font-weight: 800;
+		color: var(--color-warning-800);
+		padding: 0 1.1rem;
+		letter-spacing: -0.015em;
+		gap: 0.25rem;
+	}
+	
+	.expiration-time {
+		display: flex;
+		align-items: baseline;
+		gap: 0.125rem;
+		line-height: 1;
+	}
+	
+	.expiration-number {
+		font-size: 1.5rem;
+		line-height: 1;
+	}
+	
+	.expiration-unit {
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--color-warning-700);
+		text-transform: lowercase;
+	}
+	
+	.expiration-label {
+		font-size: 0.75rem;
+		font-weight: 400;
+		color: var(--color-warning-600);
+		text-transform: lowercase;
+	}
+	
+	.capability-metadata {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		gap: 0.25rem;
+		padding: 1rem 1.25rem;
+		border-left: 1px solid rgba(0, 0, 0, 0.1);
+		flex-shrink: 0;
+	}
+	
+	/* Mobile Responsive Styles */
+	@media (max-width: 768px) {
+		.capability-header {
+			flex-direction: column;
+		}
+		
+		/* Title Section - Full Width on Mobile */
+		.capability-title-section {
+			padding: 0.75rem 1rem;
+			border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+		}
+		
+		.capability-title {
+			font-size: 1rem;
+		}
+		
+		.capability-description {
+			font-size: 0.8125rem;
+		}
+		
+		/* Metadata - Stacked on Mobile */
+		.capability-metadata {
+			flex-direction: row;
+			flex-wrap: wrap;
+			gap: 0.75rem;
+			padding: 0.75rem 1rem;
+			border-left: none;
+			border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+			justify-content: flex-start;
+		}
+		
+		.capability-metadata > div {
+			flex-direction: row;
+			gap: 0.5rem;
+		}
+		
+		/* Expiration - Full Width on Mobile */
+		.capability-expiration {
+			min-width: auto;
+			width: 100%;
+			border-left: none;
+			border-bottom: 1px solid var(--color-warning-300);
+		}
+		
+		.expiration-value {
+			padding: 0.75rem 1rem;
+		}
+		
+		.expiration-number {
+			font-size: 1.25rem;
+		}
+		
+		/* Container adjustments */
+		.max-w-2xl {
+			padding-left: 0.75rem;
+			padding-right: 0.75rem;
+		}
+		
+		/* Header adjustments */
+		h1 {
+			font-size: 2rem;
+		}
+		
+		h2 {
+			font-size: 1.75rem;
+		}
+	}
+	
+	/* Very small screens */
+	@media (max-width: 480px) {
+		.capability-title {
+			font-size: 0.9375rem;
+		}
+		
+		.capability-description {
+			font-size: 0.75rem;
+		}
+		
+		.expiration-number {
+			font-size: 1.125rem;
+		}
+		
+		.expiration-unit,
+		.expiration-label {
+			font-size: 0.6875rem;
+		}
+		
+		h1 {
+			font-size: 1.75rem;
+		}
+		
+		h2 {
+			font-size: 1.5rem;
+		}
+	}
+</style>

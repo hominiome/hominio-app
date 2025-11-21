@@ -51,11 +51,11 @@ export const auth = betterAuth({
   // Add plugins if needed (but keep minimal for migrations)
   socialProviders: process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
     ? {
-        google: {
-          clientId: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        },
-      }
+      google: {
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      },
+    }
     : undefined,
 });
 
@@ -170,8 +170,11 @@ export async function migrateCapabilities(dbInstance: Kysely<any>) {
         .execute();
       console.log("✅ Added title column to capabilities table");
     } catch (error: any) {
-      if (!error.message?.includes("already exists") && !error.message?.includes("duplicate")) {
-        console.log("ℹ️  Title column may already exist, skipping");
+      if (error.message?.includes("already exists") || error.message?.includes("duplicate")) {
+        console.log("ℹ️  Title column already exists, skipping");
+      } else {
+        // Re-throw unexpected errors (connection issues, permissions, etc.)
+        throw error;
       }
     }
 
@@ -182,8 +185,11 @@ export async function migrateCapabilities(dbInstance: Kysely<any>) {
         .execute();
       console.log("✅ Added description column to capabilities table");
     } catch (error: any) {
-      if (!error.message?.includes("already exists") && !error.message?.includes("duplicate")) {
-        console.log("ℹ️  Description column may already exist, skipping");
+      if (error.message?.includes("already exists") || error.message?.includes("duplicate")) {
+        console.log("ℹ️  Description column already exists, skipping");
+      } else {
+        // Re-throw unexpected errors (connection issues, permissions, etc.)
+        throw error;
       }
     }
 
@@ -200,7 +206,7 @@ export async function migrateCapabilities(dbInstance: Kysely<any>) {
  */
 export async function seedAdminCapabilities(dbInstance: Kysely<any>) {
   const ADMIN = process.env.ADMIN;
-  
+
   if (!ADMIN) {
     console.log("ℹ️  ADMIN not set, skipping admin capability seeding\n");
     return;
@@ -210,7 +216,7 @@ export async function seedAdminCapabilities(dbInstance: Kysely<any>) {
 
   try {
     const principal = `user:${ADMIN}`;
-    
+
     // Check if admin already has voice API capability
     const existingCapability = await dbInstance
       .selectFrom("capabilities")

@@ -38,8 +38,10 @@
 		ctaHref = null,
 		showLoginButton = true, // Show login icon button in CTA state
 		showCapabilityModal = false,
+		showSuccessModal = false,
 		onRequestAccess = () => {},
 		onCloseCapabilityModal = () => {},
+		onCloseSuccessModal = () => {},
 	} = $props();
 	
 	let userImageFailed = $state(false);
@@ -94,6 +96,23 @@
 {:else if pillState === 'cta'}
 	<!-- CTA State: Show modals if authenticated, then show CTA buttons -->
 	{#if isAuthenticated}
+		<!-- Success Modal (shown after access request is submitted) -->
+		{#if showSuccessModal}
+			<div class="connection-modal modal-success">
+				<div class="connection-content">
+					<div class="connection-icon">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+						</svg>
+					</div>
+					<div class="connection-text-group">
+						<p class="connection-text">Access request submitted</p>
+						<p class="connection-subtext">The admin will review your request</p>
+					</div>
+				</div>
+			</div>
+		{/if}
+		
 		<!-- Capability Modal (shown when user doesn't have voice capability) -->
 		{#if showCapabilityModal}
 			<div class="connection-modal modal-capability">
@@ -107,14 +126,11 @@
 						<p class="connection-text">Access required</p>
 						<p class="connection-subtext">You need permission to use the voice assistant</p>
 					</div>
-					<button onclick={onRequestAccess} class="request-access-btn">
-						Request access
-					</button>
-					<button onclick={onCloseCapabilityModal} class="close-modal-btn" aria-label="Close">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-							<path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
-						</svg>
-					</button>
+					<div class="request-access-container">
+						<button onclick={onRequestAccess} class="request-access-btn">
+							Request access
+						</button>
+					</div>
 				</div>
 			</div>
 		{/if}
@@ -182,6 +198,23 @@
 		{/if}
 	</div>
 {:else if isAuthenticated}
+	<!-- Success Modal (shown after access request is submitted) -->
+	{#if showSuccessModal}
+		<div class="connection-modal modal-success">
+			<div class="connection-content">
+				<div class="connection-icon">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+						<path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+					</svg>
+				</div>
+				<div class="connection-text-group">
+					<p class="connection-text">Access request submitted</p>
+					<p class="connection-subtext">The admin will review your request</p>
+				</div>
+			</div>
+		</div>
+	{/if}
+	
 	<!-- Capability Modal (shown when user doesn't have voice capability) -->
 	{#if showCapabilityModal}
 		<div class="connection-modal modal-capability">
@@ -195,14 +228,11 @@
 					<p class="connection-text">Access required</p>
 					<p class="connection-subtext">You need permission to use the voice assistant</p>
 				</div>
-				<button onclick={onRequestAccess} class="request-access-btn">
-					Request access
-				</button>
-				<button onclick={onCloseCapabilityModal} class="close-modal-btn" aria-label="Close">
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-						<path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
-					</svg>
-				</button>
+				<div class="request-access-container">
+					<button onclick={onRequestAccess} class="request-access-btn">
+						Request access
+					</button>
+				</div>
 			</div>
 		</div>
 	{/if}
@@ -263,11 +293,11 @@
 			
 			<!-- Center: Call Button -->
 			<div class="nav-center">
-				{#if isCallActive}
+				{#if isCallActive || showCapabilityModal || showSuccessModal}
 					<button
-						onclick={onStopCall}
+						onclick={showCapabilityModal ? onCloseCapabilityModal : showSuccessModal ? onCloseSuccessModal : onStopCall}
 						class="call-btn call-btn-active"
-						aria-label="Stop call"
+						aria-label={showCapabilityModal ? "Close" : showSuccessModal ? "Close" : "Stop call"}
 						disabled={isConnecting}
 					>
 						{#if isConnecting}
@@ -389,12 +419,25 @@
 	}
 	
 	.modal-capability .connection-content {
-		background-color: var(--color-primary-800); /* Primary 800 */
-		border-color: var(--color-primary-800);
+		background-color: var(--color-alert-500); /* Alert - purple/magenta */
+		border-color: var(--color-alert-400);
 		opacity: 0.95;
 		padding: 1rem 1.25rem;
 		gap: 0.75rem;
 		position: relative;
+		flex-direction: column;
+		align-items: center;
+	}
+	
+	.modal-success .connection-content {
+		background-color: var(--color-success-500); /* Success - green */
+		border-color: var(--color-success-400);
+		opacity: 0.95;
+		padding: 1rem 1.25rem;
+		gap: 0.75rem;
+		position: relative;
+		flex-direction: column;
+		align-items: center;
 	}
 	
 	.connection-text-group {
@@ -402,6 +445,12 @@
 		flex-direction: column;
 		gap: 0.25rem;
 		flex: 1;
+		text-align: center;
+		width: 100%;
+	}
+	
+	.modal-capability .connection-text-group {
+		flex: 0;
 	}
 	
 	.connection-subtext {
@@ -411,23 +460,32 @@
 		white-space: nowrap;
 	}
 	
+	.request-access-container {
+		width: 100%;
+		display: flex;
+		justify-content: center;
+		margin-top: 0.5rem;
+	}
+	
 	.request-access-btn {
-		background-color: var(--color-primary-500); /* Primary 500 */
-		border: 1px solid var(--color-primary-400);
-		color: white;
-		padding: 0.5rem 1rem;
-		border-radius: 0.5rem;
-		font-size: 0.8125rem;
-		font-weight: 500;
+		background-color: rgba(255, 255, 255, 0.95); /* White background */
+		border: 2px solid var(--color-alert-300);
+		color: var(--color-alert-700); /* Alert 700 - dark text */
+		padding: 0.625rem 1.5rem;
+		border-radius: 9999px; /* Fully rounded like all other buttons */
+		font-size: 0.875rem;
+		font-weight: 600;
 		cursor: pointer;
 		transition: all 0.2s;
 		white-space: nowrap;
-		opacity: 0.9;
+		box-shadow: 0 2px 8px rgba(163, 55, 106, 0.2); /* Alert colored shadow */
 	}
 	
 	.request-access-btn:hover {
-		background-color: var(--color-primary-600); /* Darker primary on hover */
-		opacity: 1;
+		background-color: rgba(255, 255, 255, 1); /* Fully opaque white on hover */
+		border-color: var(--color-alert-200);
+		color: var(--color-alert-800); /* Darker alert text on hover */
+		box-shadow: 0 4px 12px rgba(163, 55, 106, 0.3); /* Stronger shadow on hover */
 		transform: translateY(-1px);
 	}
 	

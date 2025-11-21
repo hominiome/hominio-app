@@ -17,4 +17,6 @@ export { default as NavPill } from './NavPill.svelte';
 export { default as Footer } from './Footer.svelte';
 export { default as Favicon } from './Favicon.svelte';
 export { default as TextWrap } from './TextWrap.svelte';
+export { default as SnakeGame } from './SnakeGame.svelte';
+export { default as ErrorPage } from './ErrorPage.svelte';
 

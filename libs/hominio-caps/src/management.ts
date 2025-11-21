@@ -107,7 +107,10 @@ export async function requestCapability(
  */
 export async function approveCapabilityRequest(
   approver: Principal,
-  requestId: string
+  requestId: string,
+  conditions?: any,
+  title?: string,
+  description?: string
 ): Promise<string> {
   const request = await getCapabilityRequest(requestId);
   if (!request) {
@@ -128,8 +131,10 @@ export async function approveCapabilityRequest(
     request.resource,
     request.actions,
     approver,
-    undefined,
-    requestId
+    conditions,
+    requestId,
+    title,
+    description
   );
 
   // Update request status

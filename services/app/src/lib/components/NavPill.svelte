@@ -1,8 +1,9 @@
-<script>
+<script lang="ts">
     import { goto } from '$app/navigation';
     import { page } from '$app/stores';
     import { createAuthClient } from '@hominio/auth';
     import { NavPill, createVoiceCallService } from '@hominio/brand';
+    import type { Capability } from '@hominio/caps';
 
 	const authClient = createAuthClient();
 	const session = authClient.useSession();
@@ -150,6 +151,7 @@
 	// Check if user has voice capability
 	let hasVoiceCapability = $state(false);
 	let showCapabilityModal = $state(false);
+	let showSuccessModal = $state(false);
 
 	async function checkVoiceCapability() {
 		if (!isAuthenticated) {
@@ -190,7 +192,7 @@
 			const capabilities = data.capabilities || [];
 			
 			// Check if user has api:voice capability
-			hasVoiceCapability = capabilities.some((cap) => 
+			hasVoiceCapability = capabilities.some((cap: Capability) => 
 				cap.resource?.type === 'api' && 
 				cap.resource?.namespace === 'voice' &&
 				cap.actions?.includes('read')
@@ -218,11 +220,68 @@
 		await voiceCall.startCall(currentAgentId);
 	}
 
-	function handleRequestAccess() {
-		// Dummy click handler for now
-		console.log('[NavPill] Request access clicked');
-		showCapabilityModal = false;
-		// TODO: Wire up actual request access flow
+	async function handleRequestAccess() {
+		if (!isAuthenticated) {
+			console.error('[NavPill] Cannot request access: not authenticated');
+			return;
+		}
+
+		try {
+			// Get wallet domain for API call
+			const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && !window.location.hostname.startsWith('127.0.0.1');
+			let walletDomain = import.meta.env.PUBLIC_DOMAIN_WALLET;
+			if (!walletDomain) {
+				if (isProduction) {
+					const hostname = window.location.hostname;
+					if (hostname.startsWith('app.')) {
+						walletDomain = hostname.replace('app.', 'wallet.');
+					} else {
+						walletDomain = `wallet.${hostname.replace(/^www\./, '')}`;
+					}
+				} else {
+					walletDomain = 'localhost:4201';
+				}
+			}
+			walletDomain = walletDomain.replace(/^https?:\/\//, '');
+			const protocol = walletDomain.startsWith('localhost') || walletDomain.startsWith('127.0.0.1') ? 'http' : 'https';
+			const walletUrl = `${protocol}://${walletDomain}`;
+
+			// Request voice capability (admin is automatically set as owner for api:voice)
+			const response = await fetch(`${walletUrl}/api/auth/capabilities/request`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				credentials: 'include',
+				body: JSON.stringify({
+					resource: {
+						type: 'api',
+						namespace: 'voice',
+					},
+					actions: ['read'],
+					message: 'Requesting access to voice assistant',
+				}),
+			});
+
+			if (!response.ok) {
+				const error = await response.json();
+				throw new Error(error.error || 'Failed to request access');
+			}
+
+			const data = await response.json();
+			console.log('[NavPill] Capability request created:', data);
+			
+			showCapabilityModal = false;
+			showSuccessModal = true;
+			
+			// Auto-close success modal after 3 seconds
+			setTimeout(() => {
+				showSuccessModal = false;
+			}, 3000);
+		} catch (err) {
+			console.error('[NavPill] Error requesting access:', err);
+			alert(err instanceof Error ? err.message : 'Failed to request access');
+		}
 	}
 
 	async function handleStopCall() {
@@ -253,6 +312,8 @@
 	onStartCall={handleStartCall}
 	onStopCall={handleStopCall}
 	showCapabilityModal={showCapabilityModal}
+	showSuccessModal={showSuccessModal}
 	onRequestAccess={handleRequestAccess}
 	onCloseCapabilityModal={() => showCapabilityModal = false}
+	onCloseSuccessModal={() => showSuccessModal = false}
 />

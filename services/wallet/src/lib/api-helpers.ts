@@ -25,6 +25,28 @@ export async function getAuthenticatedSession(request: Request) {
 }
 
 /**
+ * Check if user is admin
+ * Throws if not authenticated
+ */
+export async function checkAdmin(request: Request): Promise<boolean> {
+    const session = await getAuthenticatedSession(request);
+    const { env } = await import("$env/dynamic/private");
+    const adminId = env.ADMIN;
+    return adminId ? session.user.id === adminId : false;
+}
+
+/**
+ * Require admin access
+ * Throws if not authenticated or not admin
+ */
+export async function requireAdmin(request: Request) {
+    const isAdmin = await checkAdmin(request);
+    if (!isAdmin) {
+        throw new Error("Forbidden: Admin access required");
+    }
+}
+
+/**
  * Standard API response helpers
  */
 export const api = {

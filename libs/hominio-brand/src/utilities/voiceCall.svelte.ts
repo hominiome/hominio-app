@@ -192,9 +192,18 @@ export function createVoiceCallService(options?: {
 
 	// Connect to WebSocket
 	async function connect(agentId?: string) {
-		if (ws && ws.readyState === WebSocket.OPEN) {
-			console.log('[VoiceCall] Already connected');
-			return;
+		// Check if WebSocket exists and is in a valid state
+		if (ws) {
+			// If WebSocket is open, we're already connected
+			if (ws.readyState === WebSocket.OPEN) {
+				console.log('[VoiceCall] Already connected');
+				return;
+			}
+			// If WebSocket is closed or closing (e.g., Safari suspension), clean it up
+			if (ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+				console.log('[VoiceCall] WebSocket is closed/closing, cleaning up and reconnecting');
+				ws = null;
+			}
 		}
 
 		status = 'connecting';
@@ -356,6 +365,13 @@ export function createVoiceCallService(options?: {
 	async function startCall(agentId?: string) {
 		isWaitingForPermission = true;
 		try {
+			// Proactively check and clean up any closed/closing WebSocket connections
+			// This handles Safari suspension cases where the WebSocket might be in a bad state
+			if (ws && (ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING)) {
+				console.log('[VoiceCall] Detected closed/closing WebSocket, cleaning up before reconnect');
+				ws = null;
+			}
+			
 			await resumeAudioContexts();
 			// Use provided agentId or fall back to initialAgentId from options
 			const effectiveAgentId = agentId || options?.initialAgentId;

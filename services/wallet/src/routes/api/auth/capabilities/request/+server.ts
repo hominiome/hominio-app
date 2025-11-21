@@ -1,6 +1,8 @@
 import { api } from "$lib/api-helpers";
+import { isTrustedOrigin } from "$lib/utils/domain";
 import type { RequestHandler } from "./$types";
 import { env } from "$env/dynamic/public";
+import { env as privateEnv } from "$env/dynamic/private";
 
 /**
  * Request Capability Endpoint
@@ -9,6 +11,15 @@ import { env } from "$env/dynamic/public";
  * Returns redirect URL to wallet approval page with callback URL
  */
 export const POST: RequestHandler = async ({ request }) => {
+    // Validate origin for CORS
+    const origin = request.headers.get("origin");
+    if (origin && !isTrustedOrigin(origin)) {
+        return api.json(
+            { error: "Unauthorized: Untrusted origin" },
+            { status: 403 }
+        );
+    }
+
     try {
         // Get authenticated session
         const session = await api.getAuthenticatedSession(request);
@@ -25,15 +36,25 @@ export const POST: RequestHandler = async ({ request }) => {
         }
 
         // Determine owner of the resource
-        // For data resources, we need to query the actual data to find owner
-        // For now, we'll require owner_id in the request body
-        // TODO: Auto-detect owner from resource
-        const ownerId = body.owner_id;
+        // For api:voice resources, admin is always the owner
+        // For other resources, require owner_id in the request body
+        let ownerId = body.owner_id;
         if (!ownerId) {
-            return api.json(
-                { error: "Invalid request: owner_id is required" },
-                { status: 400 }
-            );
+            // Auto-detect owner for api:voice (admin)
+            if (resource.type === 'api' && resource.namespace === 'voice') {
+                ownerId = privateEnv.ADMIN;
+                if (!ownerId) {
+                    return api.json(
+                        { error: "Admin not configured" },
+                        { status: 500 }
+                    );
+                }
+            } else {
+                return api.json(
+                    { error: "Invalid request: owner_id is required for this resource type" },
+                    { status: 400 }
+                );
+            }
         }
 
         // Extract principal
@@ -86,10 +107,19 @@ export const POST: RequestHandler = async ({ request }) => {
         const protocol = walletDomain.startsWith('localhost') || walletDomain.startsWith('127.0.0.1') ? 'http' : 'https';
         const redirectUrl = `${protocol}://${walletDomain}/capabilities/requests/${requestId}${callback_url ? `?callback=${encodeURIComponent(callback_url)}` : ''}`;
 
+        // Add CORS headers if origin is present
+        const responseHeaders: HeadersInit = {};
+        if (origin) {
+            responseHeaders["Access-Control-Allow-Origin"] = origin;
+            responseHeaders["Access-Control-Allow-Credentials"] = "true";
+            responseHeaders["Access-Control-Allow-Methods"] = "POST, OPTIONS";
+            responseHeaders["Access-Control-Allow-Headers"] = "Content-Type, Cookie";
+        }
+
         return api.json({
             requestId,
             redirectUrl,
-        });
+        }, { headers: responseHeaders });
     } catch (error) {
         console.error("[capabilities/request] Error:", error);
         if (error instanceof Error && error.message.includes("Unauthorized")) {
@@ -98,13 +128,40 @@ export const POST: RequestHandler = async ({ request }) => {
                 { status: 401 }
             );
         }
+        // Add CORS headers even on error
+        const errorHeaders: HeadersInit = {};
+        if (origin) {
+            errorHeaders["Access-Control-Allow-Origin"] = origin;
+            errorHeaders["Access-Control-Allow-Credentials"] = "true";
+            errorHeaders["Access-Control-Allow-Methods"] = "POST, OPTIONS";
+            errorHeaders["Access-Control-Allow-Headers"] = "Content-Type, Cookie";
+        }
+
         return api.json(
             {
                 error: "Internal server error",
                 message: error instanceof Error ? error.message : "Unknown error",
             },
-            { status: 500 }
+            { status: 500, headers: errorHeaders }
         );
     }
+};
+
+/**
+ * Handle OPTIONS preflight requests
+ */
+export const OPTIONS: RequestHandler = async ({ request }) => {
+    const origin = request.headers.get("origin");
+    const headers = new Headers();
+
+    if (origin && isTrustedOrigin(origin)) {
+        headers.set("Access-Control-Allow-Origin", origin);
+        headers.set("Access-Control-Allow-Credentials", "true");
+        headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+        headers.set("Access-Control-Allow-Headers", "Content-Type, Cookie");
+        headers.set("Access-Control-Max-Age", "86400"); // 24 hours
+    }
+
+    return new Response(null, { status: 204, headers });
 };
 
