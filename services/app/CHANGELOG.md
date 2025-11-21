@@ -1,3 +1,10 @@
+## [0.12.10](https://github.com/hominiome/hominio/compare/v0.12.9...v0.12.10) (2025-11-21)
+
+
+### Bug Fixes
+
+* update schema lookup to use name-scoped identifiers and fix validation export ([c6fc642](https://github.com/hominiome/hominio/commit/c6fc64290ee71692c760cd100f1965b54aa60cfd))
+
 ## [0.12.9](https://github.com/hominiome/hominio/compare/v0.12.8...v0.12.9) (2025-11-21)
 
 
