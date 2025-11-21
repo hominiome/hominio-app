@@ -18,7 +18,7 @@ libs/hominio-brand/src/assets/
 When you run `bun dev`, a file watcher automatically syncs assets to:
 - `services/app/static/brand/`
 - `services/wallet/static/brand/`
-- `services/website/public/brand/`
+- `services/website/static/brand/`
 
 The `brand/` subfolder makes it clear these assets come from the hominio-brand package! 🎨
 

@@ -1,8 +1,9 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { createAuthClient } from '@hominio/auth';
 	import { goto } from '$app/navigation';
 	import { BackgroundBlobs, GlassCard, GlassButton, GlassInfoCard, LoadingSpinner, Alert, ProfileImage } from '@hominio/brand';
-	// import type { Capability, CapabilityRequest } from '@hominio/caps';
+	import type { Capability } from '@hominio/caps';
 
 	const authClient = createAuthClient();
 	const session = authClient.useSession();
@@ -10,6 +11,10 @@
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	let signingOut = $state(false);
+	
+	let capabilities = $state<Capability[]>([]);
+	let capabilitiesLoading = $state(true);
+	let capabilitiesError = $state<string | null>(null);
 
 	$effect(() => {
 		// Handle session state changes
@@ -24,6 +29,11 @@
 		}
 		
 		loading = false;
+		
+		// Load capabilities when session is ready
+		if ($session.data?.user && capabilitiesLoading && capabilities.length === 0 && !capabilitiesError) {
+			loadCapabilities();
+		}
 	});
 
 	async function handleSignOut() {
@@ -36,6 +46,51 @@
 			console.error('Sign out error:', error);
 			signingOut = false;
 		}
+	}
+
+	async function loadCapabilities() {
+		try {
+			capabilitiesLoading = true;
+			capabilitiesError = null;
+			
+			console.log('[Profile] Loading capabilities...');
+			const response = await fetch('/api/auth/capabilities', {
+				credentials: 'include',
+			});
+			
+			console.log('[Profile] Capabilities response status:', response.status);
+			
+			if (!response.ok) {
+				const errorText = await response.text();
+				console.error('[Profile] Capabilities API error:', response.status, errorText);
+				throw new Error(`Failed to load capabilities: ${response.status} ${errorText}`);
+			}
+			
+			const data = await response.json();
+			console.log('[Profile] Capabilities data:', data);
+			capabilities = data.capabilities || [];
+			console.log('[Profile] Loaded capabilities count:', capabilities.length);
+		} catch (err) {
+			console.error('[Profile] Error loading capabilities:', err);
+			capabilitiesError = err instanceof Error ? err.message : 'Failed to load capabilities';
+		} finally {
+			capabilitiesLoading = false;
+		}
+	}
+
+	// Capabilities will be loaded automatically when session is ready via $effect
+
+	// Format resource string for display
+	function formatResource(capability: Capability): string {
+		const { resource } = capability;
+		let resourceStr = `${resource.type}:${resource.namespace}`;
+		if (resource.id) {
+			resourceStr += `:${resource.id}`;
+		}
+		if (resource.device_id) {
+			resourceStr += ` (device: ${resource.device_id})`;
+		}
+		return resourceStr;
 	}
 </script>
 
@@ -112,10 +167,66 @@
 					</div>
 				</GlassCard>
 
-			<!-- TODO: Re-enable Capabilities Section -->
-			<!-- <div class="mt-12">
-				... capabilities UI ...
-			</div> -->
+			<!-- Capabilities Section -->
+			<div class="mt-12">
+				<h2 class="mb-6 text-3xl font-bold tracking-tight text-slate-900">My Capabilities</h2>
+				
+				{#if capabilitiesLoading}
+					<div class="flex items-center justify-center py-12">
+						<LoadingSpinner />
+						<p class="ml-4 text-sm font-medium text-slate-500">Loading capabilities...</p>
+					</div>
+				{:else if capabilitiesError}
+					<GlassCard class="p-6">
+						<div class="text-center text-red-600">
+							<p class="font-medium">Error loading capabilities</p>
+							<p class="mt-2 text-sm text-slate-500">{capabilitiesError}</p>
+						</div>
+					</GlassCard>
+				{:else if capabilities.length === 0}
+					<GlassCard class="p-8 text-center">
+						<p class="text-slate-600">No capabilities granted yet.</p>
+					</GlassCard>
+				{:else}
+					<div class="grid gap-4 md:grid-cols-2">
+						{#each capabilities as capability (capability.id)}
+							<GlassCard class="p-6">
+								<div class="space-y-3">
+									<div>
+										<span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Resource</span>
+										<p class="mt-1 font-mono text-sm text-slate-900 break-all">{formatResource(capability)}</p>
+									</div>
+									<div>
+										<span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Actions</span>
+										<div class="mt-1 flex flex-wrap gap-2">
+											{#each capability.actions as action}
+												<span class="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
+													{action}
+												</span>
+											{/each}
+										</div>
+									</div>
+									{#if capability.conditions?.expiresAt}
+										<div>
+											<span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Expires</span>
+											<p class="mt-1 text-sm text-slate-600">
+												{new Date(capability.conditions.expiresAt).toLocaleDateString('de-DE', { 
+													year: 'numeric', 
+													month: 'long', 
+													day: 'numeric' 
+												})}
+											</p>
+										</div>
+									{/if}
+									<div class="pt-2 text-xs text-slate-400">
+										Granted {new Date(capability.created_at).toLocaleDateString('de-DE')}
+									</div>
+								</div>
+							</GlassCard>
+						{/each}
+					</div>
+				{/if}
+			</div>
 		{/if}
 	</div>
 </div>

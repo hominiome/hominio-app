@@ -52,39 +52,110 @@ export const colors = {
 			text: '#dc2626', // text-red-600
 		},
 	},
-	// Text colors
+	// Text colors - using primary brand shades
 	text: {
-		primary: '#0f172a', // text-slate-900
-		secondary: '#475569', // text-slate-600
-		tertiary: '#64748b', // text-slate-500
-		muted: '#94a3b8', // text-slate-400
-		title: '#081b47', // Dark navy blue for titles/headings
+		primary: '#0042aa', // Primary 500 - primary text color
+		secondary: '#2e64b9', // Primary 400 - secondary text
+		tertiary: '#5c86c9', // Primary 300 - tertiary text
+		muted: '#8aa8d8', // Primary 200 - muted text
+		title: '#001a42', // Primary 800 - titles/headings
 	},
-	// Brand navy/dark blue - darker marine blue (no purple tint)
+	// Primary brand color
 	brand: {
-		navy: {
-			// Navy dark blue - primary brand color (from hominio-me design)
-			50: '#f0f2f5',
-			100: '#e0e5eb',
-			200: '#c1cad7',
-			300: '#a2b0c3',
-			400: '#8395af',
-			500: '#081b47', // Primary navy - dark marine blue
-			600: '#061836',
-			700: '#051529',
-			800: '#040f1c',
-			900: '#030a14',
-			950: '#02050a',
+		primary: {
+			50: '#e6ecf7',
+			100: '#c4d4ed', // Button text/label color (lighter than 50, lighter than old 100)
+			200: '#8aa8d8',
+			300: '#5c86c9',
+			400: '#2e64b9',
+			500: '#0042aa', // Center color
+			600: '#003486',
+			700: '#002662', // Button hover
+			800: '#001a42', // Buttons and navpill bg (slightly lighter)
+			900: '#001225', // Title text (lighter than before)
 			// Legacy/compatibility
-			base: '#081b47', // Same as 500
-			light: '#8395af', // Same as 400
-			dark: '#040f1c', // Same as 800
+			base: '#0042aa', // Same as 500
+			light: '#2e64b9', // Same as 400
+			dark: '#001225', // Same as 900
 			glass: {
-				bg: 'rgba(8, 27, 71, 0.15)', // navy/15
-				bgHover: 'rgba(8, 27, 71, 0.25)', // navy/25
-				border: 'rgba(8, 27, 71, 0.3)', // navy/30
-				borderHover: 'rgba(8, 27, 71, 0.5)', // navy/50
+				bg: 'rgba(0, 26, 66, 0.15)', // primary-800/15
+				bgHover: 'rgba(0, 26, 66, 0.25)', // primary-800/25
+				border: 'rgba(0, 26, 66, 0.3)', // primary-800/30
+				borderHover: 'rgba(0, 26, 66, 0.5)', // primary-800/50
 			},
+		},
+		// Keep navy for backward compatibility, but map to primary
+		navy: {
+			50: '#e6ecf7',
+			100: '#c4d4ed',
+			200: '#8aa8d8',
+			300: '#5c86c9',
+			400: '#2e64b9',
+			500: '#0042aa',
+			600: '#003486',
+			700: '#002662',
+			800: '#001a42',
+			900: '#001225',
+			base: '#0042aa',
+			light: '#2e64b9',
+			dark: '#000a1a',
+			glass: {
+				bg: 'rgba(0, 26, 66, 0.15)',
+				bgHover: 'rgba(0, 26, 66, 0.25)',
+				border: 'rgba(0, 26, 66, 0.3)',
+				borderHover: 'rgba(0, 26, 66, 0.5)',
+			},
+		},
+		// Teal/Turquoise - Secondary Brand Color
+		secondary: {
+			50: '#e6f7f9',
+			100: '#cceff3',
+			200: '#99dfe7',
+			300: '#66cfdb',
+			400: '#45b8c8',
+			500: '#2da6b4', // Center color
+			600: '#258590',
+			700: '#1c646c',
+			800: '#134348',
+			900: '#0a2224',
+			950: '#051112',
+			base: '#2da6b4', // Same as 500
+			light: '#45b8c8', // Same as 400
+			dark: '#0a2224', // Same as 900
+		},
+		// Yellow - Accent Brand Color
+		accent: {
+			50: '#fefce8',
+			100: '#fef9c3',
+			200: '#fef39e',
+			300: '#fdee79',
+			400: '#fde954',
+			500: '#f4d03f', // Center color
+			600: '#d4b035',
+			700: '#b4902b',
+			800: '#947022',
+			900: '#745018',
+			950: '#54380f',
+			base: '#f4d03f', // Same as 500
+			light: '#fde954', // Same as 400
+			dark: '#745018', // Same as 900
+		},
+		// Success - Green Brand Color
+		success: {
+			50: '#ecfdf5',
+			100: '#d1fae5',
+			200: '#a7f3d0',
+			300: '#6ee7b7',
+			400: '#34d399',
+			500: '#4ca984', // Center color
+			600: '#059669',
+			700: '#047857',
+			800: '#065f46',
+			900: '#064e3b',
+			950: '#022c22',
+			base: '#4ca984', // Same as 500
+			light: '#34d399', // Same as 400
+			dark: '#064e3b', // Same as 900
 		},
 	},
 };

@@ -4,10 +4,16 @@ import { building } from "$app/environment";
 import { isTrustedOrigin } from "$lib/utils/domain";
 
 export async function handle({ event, resolve }) {
-	// Skip BetterAuth handling for our custom verification endpoint
-	// This endpoint is handled by the route handler at /api/auth/verify/+server.ts
+	// Skip BetterAuth handling for our custom endpoints
+	// These endpoints are handled by their respective route handlers
 	const url = new URL(event.request.url);
-	if (url.pathname === '/api/auth/verify') {
+	const pathname = url.pathname;
+	
+	// Skip BetterAuth for custom endpoints
+	if (
+		pathname === '/api/auth/verify' ||
+		pathname.startsWith('/api/auth/capabilities')
+	) {
 		// Let SvelteKit handle this route normally (don't intercept with BetterAuth)
 		return resolve(event);
 	}

@@ -17,7 +17,7 @@
 		name: 'Charles',
 		role: 'Hotel Concierge',
 		description: 'Dein persönlicher Concierge. Ich kann Dir bei Buchungen, Empfehlungen, Room Service und allem anderen helfen, was Du während Deines Aufenthalts benötigst.',
-		color: 'from-blue-400 to-cyan-400'
+		color: 'from-[#45b8c8] to-[#2da6b4]' // Secondary brand color gradient
 	};
 
 	// Agent skills/capabilities (fallback)
@@ -218,7 +218,7 @@
 	const skills = $derived(agentConfig?.skills || skillsFallback);
 </script>
 
-<div class="relative min-h-screen overflow-x-hidden bg-glass-gradient px-6 pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
+<div class="relative min-h-screen overflow-x-hidden bg-glass-gradient px-6 pt-[env(safe-area-inset-top)] pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
 	<BackgroundBlobs />
 
 	<div class="relative z-10 mx-auto max-w-6xl">
@@ -239,7 +239,7 @@
 				<GlassCard class="overflow-hidden p-8">
 					<div class="flex flex-col items-center text-center md:flex-row md:text-left md:gap-6">
 						<div class="mb-4 md:mb-0">
-							<svg class="w-20 h-20 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+							<svg class="w-20 h-20 text-[#2da6b4]" fill="currentColor" viewBox="0 0 24 24">
 								<path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.83l6 6V19h-2v-6H8v6H6v-7.17l6-6z"/>
 							</svg>
 						</div>
@@ -281,11 +281,11 @@
 							>
 								<div class="flex flex-col items-center text-center">
 									{#if skill.svg}
-										<svg class="mb-3 w-10 h-10 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+										<svg class="mb-3 w-10 h-10 text-[#2da6b4]" fill="currentColor" viewBox="0 0 24 24">
 											{@html skill.svg}
 										</svg>
 									{:else}
-										<div class="flex justify-center items-center mb-3 w-10 h-10 text-xl text-white bg-blue-500 rounded-full">
+										<div class="flex justify-center items-center mb-3 w-10 h-10 text-xl text-white bg-[#2da6b4] rounded-full">
 											{skill.name[0]?.toUpperCase() || '?'}
 										</div>
 									{/if}

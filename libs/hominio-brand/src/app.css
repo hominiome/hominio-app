@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@plugin '@tailwindcss/container-queries';
 
 /* Font Face Declarations */
 
@@ -15,6 +16,60 @@
 :root {
 	--font-sans: 'Inter', system-ui, sans-serif;
 	--font-title: 'Shrikhand', cursive;
+	
+	/* Container Query Breakpoints */
+	--container-3xs: 20rem; /* 320px */
+	--container-2xs: 24rem; /* 384px */
+	--container-xs: 32rem; /* 512px */
+	--container-sm: 40rem; /* 640px */
+	--container-md: 48rem; /* 768px */
+	--container-lg: 64rem; /* 1024px */
+	--container-xl: 80rem; /* 1280px */
+	
+	/* Semantic Colors - Light Mode (Mapped to Brand Colors) */
+	/* Primary = Marine Blue (Navy) */
+	--color-primary-50: #e6ecf7;
+	--color-primary-100: #c4d4ed;
+	--color-primary-200: #8aa8d8;
+	--color-primary-300: #5c86c9;
+	--color-primary-400: #2e64b9;
+	--color-primary-500: #0042aa;
+	--color-primary-600: #003486;
+	--color-primary-700: #002662;
+	--color-primary-800: #001a42;
+	--color-primary-900: #001225;
+	--color-primary-950: #000a1a;
+	
+	/* Secondary = Teal */
+	--color-secondary-50: #e6f7f9;
+	--color-secondary-100: #cceff3;
+	--color-secondary-200: #99dfe7;
+	--color-secondary-300: #66cfdb;
+	--color-secondary-400: #45b8c8;
+	--color-secondary-500: #2da6b4;
+	--color-secondary-600: #258590;
+	--color-secondary-700: #1c646c;
+	--color-secondary-800: #134348;
+	--color-secondary-900: #0a2224;
+	--color-secondary-950: #051112;
+	
+	/* Accent = Yellow */
+	--color-accent-50: #fefce8;
+	--color-accent-100: #fef9c3;
+	--color-accent-200: #fef39e;
+	--color-accent-300: #fdee79;
+	--color-accent-400: #fde954;
+	--color-accent-500: #f4d03f;
+	--color-accent-600: #d4b035;
+	--color-accent-700: #b4902b;
+	--color-accent-800: #947022;
+	--color-accent-900: #745018;
+	--color-accent-950: #54380f;
+	
+	/* Legacy semantic mappings for backward compatibility */
+	--color-primary: var(--color-primary-500);
+	--color-secondary: var(--color-secondary-500);
+	--color-accent: var(--color-accent-500);
 }
 
 /* Liquid Glass utility classes - using regular CSS for Tailwind v4 compatibility */
@@ -86,14 +141,15 @@
 
 /* Navy variant for brand buttons */
 .glass-button-navy {
-	border-color: rgba(8, 27, 71, 0.9); /* More visible border */
-	background-color: rgba(8, 27, 71, 0.85); /* Solid navy - 85% opacity */
-	color: #ffffff; /* White text for better contrast */
+	border-color: rgba(0, 26, 66, 0.9); /* Primary 800 */
+	background-color: #001a42; /* Primary 800 - buttons bg */
+	color: #c4d4ed; /* Primary 100 - button text/label color (lighter) */
 }
 
 .glass-button-navy:hover {
-	border-color: rgba(8, 27, 71, 1);
-	background-color: rgba(8, 27, 71, 0.95); /* Even more solid on hover */
+	border-color: rgba(0, 38, 98, 0.9); /* Primary 700 */
+	background-color: #002662; /* Primary 700 - button hover */
+	color: #b8cae7; /* Primary 100 - keep text color */
 	box-shadow: 0 4px 8px -1px rgb(0 0 0 / 0.12);
 	transform: translateY(-1px);
 }
@@ -238,7 +294,7 @@ h1, h2, h3, h4, h5, h6 {
 	font-weight: 400; /* Shrikhand Regular weight */
 	line-height: 1.2;
 	letter-spacing: 0.5px; /* Subtle character spacing */
-	color: #081b47; /* Brand navy - dark marine blue (not pure black) */
+	color: #001a42; /* Primary 800 - titles/headings */
 }
 
 /* Ensure spans within headings inherit the title font and color */

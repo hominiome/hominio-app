@@ -109,16 +109,45 @@
 		}
 	}
 
-	// Reactive check: if already signed in, redirect to profile or callback
+	// Get app service URL
+	function getAppUrl() {
+		if (!browser) return '';
+		
+		const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.startsWith('127.0.0.1');
+		const env = import.meta.env;
+		let appDomain = env.PUBLIC_DOMAIN_APP;
+		
+		if (!appDomain) {
+			if (isProduction) {
+				const hostname = window.location.hostname;
+				if (hostname.startsWith('wallet.')) {
+					appDomain = hostname.replace('wallet.', 'app.');
+				} else if (hostname.startsWith('www.')) {
+					appDomain = `app.${hostname.replace('www.', '')}`;
+				} else {
+					appDomain = `app.${hostname}`;
+				}
+			} else {
+				appDomain = 'localhost:4202';
+			}
+		}
+		
+		appDomain = appDomain.replace(/^https?:\/\//, '');
+		const protocol = appDomain.startsWith('localhost') || appDomain.startsWith('127.0.0.1') ? 'http' : 'https';
+		return `${protocol}://${appDomain}/me`;
+	}
+
+	// Reactive check: if already signed in on root route, redirect to app or callback
+	// Only redirect from root route (/), not from other routes like /profile
 	$effect(() => {
-		if ($session.data?.user) {
+		if ($session.data?.user && $page.url.pathname === '/') {
 			const callback = getCallbackUrl();
 			if (callback) {
 				// Redirect to the callback URL (e.g., app.hominio.me/me)
 				window.location.href = callback;
 			} else {
-				// If no callback, redirect to profile page
-				goto('/profile');
+				// If no callback, redirect to app service
+				window.location.href = getAppUrl();
 			}
 		}
 	});
@@ -127,8 +156,8 @@
 		signingIn = true;
 		try {
 			const callback = getCallbackUrl();
-			// Use callback URL if provided, otherwise redirect to wallet root after sign-in
-			const callbackURL = callback || (browser ? window.location.origin : '');
+			// Use callback URL if provided, otherwise redirect to app service after sign-in
+			const callbackURL = callback || (browser ? getAppUrl() : '');
 			await authClient.signIn.social({
 				provider: 'google',
 				callbackURL,

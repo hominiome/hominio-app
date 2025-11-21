@@ -1,12 +1,45 @@
+<script lang="ts">
+	import { browser } from '$app/environment';
+	import { env as publicEnv } from '$env/dynamic/public';
+
+	// Get website domain URL for legal links
+	function getWebsiteUrl(): string {
+		if (!browser) return '';
+		
+		const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.startsWith('127.0.0.1');
+		let websiteDomain = publicEnv.PUBLIC_DOMAIN_WEBSITE;
+		
+		if (!websiteDomain) {
+			if (isProduction) {
+				const hostname = window.location.hostname;
+				// Remove subdomain prefixes (app., wallet., etc.) to get base domain
+				websiteDomain = hostname.replace(/^(app|wallet|api|sync)\./, '');
+				// If no subdomain was removed, use as-is
+				if (websiteDomain === hostname) {
+					websiteDomain = hostname.replace(/^www\./, '');
+				}
+			} else {
+				websiteDomain = 'localhost:4200';
+			}
+		}
+		
+		websiteDomain = websiteDomain.replace(/^https?:\/\//, '');
+		const protocol = websiteDomain.startsWith('localhost') || websiteDomain.startsWith('127.0.0.1') ? 'http' : 'https';
+		return `${protocol}://${websiteDomain}`;
+	}
+
+	const websiteUrl = $derived.by(() => getWebsiteUrl());
+</script>
+
 <div class="footer-wrapper">
   <div class="footer">
-    <a href="/" class="footer-link">Home</a>
+    <a href={websiteUrl} class="footer-link">Home</a>
     <span class="footer-separator">·</span>
-    <a href="/legal-notice" class="footer-link">Site Notice</a>
+    <a href={`${websiteUrl}/legal-notice`} class="footer-link">Site Notice</a>
     <span class="footer-separator">·</span>
-    <a href="/privacy-policy" class="footer-link">Privacy Policy</a>
+    <a href={`${websiteUrl}/privacy-policy`} class="footer-link">Privacy Policy</a>
     <span class="footer-separator">·</span>
-    <a href="/social-media-privacy-policy" class="footer-link"
+    <a href={`${websiteUrl}/social-media-privacy-policy`} class="footer-link"
       >Social Media Policy</a
     >
   </div>
@@ -59,7 +92,7 @@
   }
 
   .footer-spacer {
-    height: 5rem;
+    height: 6rem; /* 6rem whitespace for overscroll above navbar */
     width: 100%;
     background: transparent;
     flex-shrink: 0;

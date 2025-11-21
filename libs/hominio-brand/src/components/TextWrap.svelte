@@ -51,7 +51,7 @@
 		margin-top: 0;
 		margin-bottom: 2rem;
 		line-height: 1.3;
-		color: var(--color-brand-navy-500, #081b47);
+		color: var(--color-primary-800, #001a42); /* Primary 800 for titles */
 	}
 
 	:global(.text-wrap-content h2) {
@@ -60,7 +60,7 @@
 		margin-top: 3rem;
 		margin-bottom: 1rem;
 		line-height: 1.3;
-		color: var(--color-brand-navy-500, #081b47);
+		color: var(--color-primary-800, #001a42); /* Primary 800 for titles */
 	}
 
 	:global(.text-wrap-content h3) {
@@ -69,7 +69,7 @@
 		margin-top: 2rem;
 		margin-bottom: 0.75rem;
 		line-height: 1.3;
-		color: var(--color-brand-navy-500, #081b47);
+		color: var(--color-primary-800, #001a42); /* Primary 800 for titles */
 	}
 
 	:global(.text-wrap-content h4) {
@@ -78,7 +78,7 @@
 		margin-top: 1.5rem;
 		margin-bottom: 0.5rem;
 		line-height: 1.3;
-		color: var(--color-brand-navy-500, #081b47);
+		color: var(--color-primary-800, #001a42); /* Primary 800 for titles */
 	}
 
 	:global(.text-wrap-content h5) {
@@ -87,7 +87,7 @@
 		margin-top: 1.3rem;
 		margin-bottom: 0.5rem;
 		line-height: 1.3;
-		color: var(--color-brand-navy-500, #081b47);
+		color: var(--color-primary-800, #001a42); /* Primary 800 for titles */
 	}
 
 	:global(.text-wrap-content p) {

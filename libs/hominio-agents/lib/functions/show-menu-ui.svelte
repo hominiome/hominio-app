@@ -14,7 +14,7 @@
 		{ 
 			id: 'appetizers', 
 			name: 'Vorspeisen', 
-			icon: '<path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.83l6 6V19h-2v-6H8v6H6v-7.17l6-6z"/>'
+			icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>' // Plate/appetizer icon
 		},
 		{ 
 			id: 'mains', 
@@ -24,7 +24,7 @@
 		{ 
 			id: 'desserts', 
 			name: 'Nachspeisen', 
-			icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.72-2.81-.01-1.65-1.38-2.35-3.65-2.85z"/>'
+			icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>' // Smiley/face icon (dessert/sweet icon)
 		},
 		{ 
 			id: 'drinks', 
@@ -65,22 +65,22 @@
 			{#if menu[cat.id] && menu[cat.id].length > 0}
 				<div class="mb-8">
 					<h3 class="mb-4 text-xl font-bold text-slate-800 flex items-center gap-2">
-						<svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+						<svg width="24" height="24" class="text-[#2da6b4]" fill="currentColor" viewBox="0 0 24 24">
 							{@html cat.icon}
 						</svg>
 						{cat.name}
 					</h3>
 					<div class="grid grid-cols-1 gap-4">
 						{#each menu[cat.id] as item}
-							<GlassCard lifted={true} class="p-0 overflow-hidden flex">
-								<div class="flex-1 p-4">
+							<GlassCard lifted={true} class="p-0 overflow-hidden flex items-stretch">
+								<div class="flex-1 p-4 min-w-0 flex-shrink">
 									<h4 class="font-semibold text-slate-900 mb-2">{item.name}</h4>
 									<p class="text-sm text-slate-600">{item.description}</p>
 								</div>
-								<div class="bg-blue-500 text-white px-6 py-4 flex flex-col items-center justify-center min-w-[120px]">
-									<div class="text-2xl font-bold">{formatPrice(item.price)}</div>
+								<div class="bg-[#2da6b4] text-white px-6 py-4 flex flex-col items-center justify-center flex-shrink-0" style="width: 140px; min-width: 140px;">
+									<div class="text-2xl font-bold whitespace-nowrap text-center">{formatPrice(item.price)}</div>
 									{#if item.type}
-										<div class="text-xs uppercase tracking-wide mt-1 opacity-90">{item.type}</div>
+										<div class="text-xs uppercase tracking-wide mt-1 opacity-90 text-center">{item.type}</div>
 									{/if}
 								</div>
 							</GlassCard>
@@ -95,7 +95,7 @@
 			<div>
 				<h3 class="mb-4 text-xl font-bold text-slate-800 flex items-center gap-2">
 					{#if categories.find(c => c.id === category)}
-						<svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+						<svg width="24" height="24" class="text-[#2da6b4]" fill="currentColor" viewBox="0 0 24 24">
 							{@html categories.find(c => c.id === category).icon}
 						</svg>
 					{/if}
@@ -103,15 +103,15 @@
 				</h3>
 				<div class="grid grid-cols-1 gap-4">
 					{#each menu[category] as item}
-						<GlassCard lifted={true} class="p-0 overflow-hidden flex">
-							<div class="flex-1 p-4">
+						<GlassCard lifted={true} class="p-0 overflow-hidden flex items-stretch">
+							<div class="flex-1 p-4 min-w-0 flex-shrink">
 								<h4 class="font-semibold text-slate-900 mb-2">{item.name}</h4>
 								<p class="text-sm text-slate-600">{item.description}</p>
 							</div>
-							<div class="bg-blue-500 text-white px-6 py-4 flex flex-col items-center justify-center w-[140px] flex-shrink-0">
-								<div class="text-2xl font-bold whitespace-nowrap">{formatPrice(item.price)}</div>
+							<div class="bg-[#2da6b4] text-white px-6 py-4 flex flex-col items-center justify-center flex-shrink-0" style="width: 140px; min-width: 140px;">
+								<div class="text-2xl font-bold whitespace-nowrap text-center">{formatPrice(item.price)}</div>
 								{#if item.type}
-									<div class="text-xs uppercase tracking-wide mt-1 opacity-90">{item.type}</div>
+									<div class="text-xs uppercase tracking-wide mt-1 opacity-90 text-center">{item.type}</div>
 								{/if}
 							</div>
 						</GlassCard>

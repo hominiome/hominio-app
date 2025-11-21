@@ -147,10 +147,82 @@
 		window.location.href = `${walletUrl}?callback=${encodeURIComponent(currentUrl)}`;
 	}
 
+	// Check if user has voice capability
+	let hasVoiceCapability = $state(false);
+	let showCapabilityModal = $state(false);
+
+	async function checkVoiceCapability() {
+		if (!isAuthenticated) {
+			hasVoiceCapability = false;
+			return false;
+		}
+
+		try {
+			// Get wallet domain for API call
+			const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && !window.location.hostname.startsWith('127.0.0.1');
+			let walletDomain = import.meta.env.PUBLIC_DOMAIN_WALLET;
+			if (!walletDomain) {
+				if (isProduction) {
+					const hostname = window.location.hostname;
+					if (hostname.startsWith('app.')) {
+						walletDomain = hostname.replace('app.', 'wallet.');
+					} else {
+						walletDomain = `wallet.${hostname.replace(/^www\./, '')}`;
+					}
+				} else {
+					walletDomain = 'localhost:4201';
+				}
+			}
+			walletDomain = walletDomain.replace(/^https?:\/\//, '');
+			const protocol = walletDomain.startsWith('localhost') || walletDomain.startsWith('127.0.0.1') ? 'http' : 'https';
+			const walletUrl = `${protocol}://${walletDomain}`;
+
+			const response = await fetch(`${walletUrl}/api/auth/capabilities`, {
+				credentials: 'include',
+			});
+
+			if (!response.ok) {
+				hasVoiceCapability = false;
+				return false;
+			}
+
+			const data = await response.json();
+			const capabilities = data.capabilities || [];
+			
+			// Check if user has api:voice capability
+			hasVoiceCapability = capabilities.some((cap) => 
+				cap.resource?.type === 'api' && 
+				cap.resource?.namespace === 'voice' &&
+				cap.actions?.includes('read')
+			);
+
+			return hasVoiceCapability;
+		} catch (err) {
+			console.error('[NavPill] Error checking capability:', err);
+			hasVoiceCapability = false;
+			return false;
+		}
+	}
+
 	// Voice call handlers - Using actual voice call service
 	async function handleStartCall() {
+		// Check capability first
+		const hasAccess = await checkVoiceCapability();
+		
+		if (!hasAccess) {
+			showCapabilityModal = true;
+			return;
+		}
+
 		// Pass current agent ID when starting call (reactive)
 		await voiceCall.startCall(currentAgentId);
+	}
+
+	function handleRequestAccess() {
+		// Dummy click handler for now
+		console.log('[NavPill] Request access clicked');
+		showCapabilityModal = false;
+		// TODO: Wire up actual request access flow
 	}
 
 	async function handleStopCall() {
@@ -180,4 +252,7 @@
 	aiState={voiceCall.aiState}
 	onStartCall={handleStartCall}
 	onStopCall={handleStopCall}
+	showCapabilityModal={showCapabilityModal}
+	onRequestAccess={handleRequestAccess}
+	onCloseCapabilityModal={() => showCapabilityModal = false}
 />

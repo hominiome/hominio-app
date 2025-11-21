@@ -3,7 +3,7 @@
 	import { createAuthClient } from '@hominio/auth';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { NavPill, createVoiceCallService, Favicon } from '@hominio/brand';
+	import { NavPill, createVoiceCallService, Favicon, Footer } from '@hominio/brand';
 	
 	let { children } = $props();
 	
@@ -69,6 +69,11 @@
 	const isAuthenticated = $derived(!!$session.data?.user);
 	const user = $derived($session.data?.user);
 	
+	// Hide NavPill on root route when not authenticated (has separate sign-in form)
+	const shouldHideNavPill = $derived.by(() => {
+		return $page.url.pathname === '/' && !isAuthenticated;
+	});
+	
 	// Debug: Log authentication state changes
 	$effect(() => {
 		console.log('[NavPill] Auth state changed:', { isAuthenticated, user: user?.name });
@@ -90,6 +95,9 @@
 	aiState={voiceCall.aiState}
 	onStartCall={handleStartCall}
 	onStopCall={handleStopCall}
+	pillState={shouldHideNavPill ? 'hidden' : 'default'}
 />
 
 {@render children()}
+
+<Footer />

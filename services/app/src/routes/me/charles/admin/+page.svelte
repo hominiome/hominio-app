@@ -42,7 +42,7 @@
 	}
 </script>
 
-<div class="relative min-h-screen overflow-x-hidden bg-glass-gradient px-6 pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
+<div class="relative min-h-screen overflow-x-hidden bg-glass-gradient px-6 pt-[env(safe-area-inset-top)] pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
 	<BackgroundBlobs />
 
 	<div class="relative z-10 mx-auto max-w-6xl py-8">

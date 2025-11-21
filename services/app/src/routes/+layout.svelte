@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.css';
-	import { BackgroundBlobs, LoadingSpinner, Favicon } from '@hominio/brand';
+	import { BackgroundBlobs, LoadingSpinner, Favicon, Footer } from '@hominio/brand';
 	import NavPill from '$lib/components/NavPill.svelte';
 	import { page } from '$app/stores';
 	import { createAuthClient } from '@hominio/auth';
@@ -177,7 +177,7 @@
 <Favicon />
 
 {#if $session.isPending}
-	<div class="flex flex-col justify-center items-center min-h-screen font-sans bg-glass-gradient text-slate-800">
+	<div class="flex flex-col justify-center items-center pt-6 min-h-screen font-sans bg-glass-gradient text-slate-800">
 		<BackgroundBlobs />
 		<div class="flex relative flex-col items-center">
 			<LoadingSpinner />
@@ -186,7 +186,7 @@
 	</div>
 {:else if !$session.data?.user}
 	<!-- Redirecting... (handled by $effect above) -->
-	<div class="flex flex-col justify-center items-center min-h-screen font-sans bg-glass-gradient text-slate-800">
+	<div class="flex flex-col justify-center items-center pt-6 min-h-screen font-sans bg-glass-gradient text-slate-800">
 		<BackgroundBlobs />
 		<div class="flex relative flex-col items-center">
 			<LoadingSpinner />
@@ -194,9 +194,10 @@
 		</div>
 	</div>
 {:else}
-<div class="min-h-screen font-sans antialiased bg-glass-gradient text-slate-800">
+<div class="pt-6 min-h-screen font-sans antialiased bg-glass-gradient text-slate-800">
 	<BackgroundBlobs />
 	{@render children()}
+	<Footer />
 	{#if $page.url.pathname !== '/'}
 	<NavPill />
 	{/if}

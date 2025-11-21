@@ -24,7 +24,7 @@ const monorepoRoot = resolve(__dirname, '../../..');
 const serviceStaticDirs = [
 	resolve(monorepoRoot, 'services/app/static/brand'),
 	resolve(monorepoRoot, 'services/wallet/static/brand'),
-	resolve(monorepoRoot, 'services/website/public/brand'),
+	resolve(monorepoRoot, 'services/website/static/brand'),
 ];
 
 /**

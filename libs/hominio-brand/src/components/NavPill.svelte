@@ -33,12 +33,19 @@
 		aiState = 'idle', // 'listening' | 'thinking' | 'speaking' | 'idle'
 		onStartCall,
 		onStopCall,
+		pillState = 'default', // 'default' | 'cta' | 'hidden'
+		ctaText = 'Sign up to waitlist now',
+		ctaHref = null,
+		showLoginButton = true, // Show login icon button in CTA state
+		showCapabilityModal = false,
+		onRequestAccess = () => {},
+		onCloseCapabilityModal = () => {},
 	} = $props();
 	
 	let userImageFailed = $state(false);
 	
-	// Helper to get wallet service URL
-	function getWalletUrl() {
+	// Helper to get wallet service URL (with optional path)
+	function getWalletUrl(path = '') {
 		if (typeof window === 'undefined') return '/';
 		
 		const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.startsWith('127.0.0.1');
@@ -56,7 +63,7 @@
 		}
 		
 		const protocol = walletDomain.startsWith('localhost') || walletDomain.startsWith('127.0.0.1') ? 'http' : 'https';
-		return `${protocol}://${walletDomain}`;
+		return `${protocol}://${walletDomain}${path}`;
 	}
 	
 	// Helper to get app service URL
@@ -83,6 +90,31 @@
 </script>
 
 {#if isAuthenticated}
+	<!-- Capability Modal (shown when user doesn't have voice capability) -->
+	{#if showCapabilityModal}
+		<div class="connection-modal modal-capability">
+			<div class="connection-content">
+				<div class="connection-icon">
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+						<path d="M12,1L8,5H11V14H13V5H16M18,23H6C4.89,23 4,22.1 4,21V9A2,2 0 0,1 6,7H9V9H6V21H18V9H15V7H18A2,2 0 0,1 20,9V21A2,2 0 0,1 18,23Z" />
+					</svg>
+				</div>
+				<div class="connection-text-group">
+					<p class="connection-text">Access required</p>
+					<p class="connection-subtext">You need permission to use the voice assistant</p>
+				</div>
+				<button onclick={onRequestAccess} class="request-access-btn">
+					Request access
+				</button>
+				<button onclick={onCloseCapabilityModal} class="close-modal-btn" aria-label="Close">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+						<path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+					</svg>
+				</button>
+			</div>
+		</div>
+	{/if}
+
 	<!-- Connection State Modal (shown when call is active) -->
 	{#if isCallActive || isConnecting || isWaitingForPermission}
 		<div class="connection-modal" class:modal-waiting={isWaitingForPermission} class:modal-connecting={isConnecting} class:modal-listening={isCallActive && aiState === 'listening'} class:modal-thinking={isCallActive && aiState === 'thinking'} class:modal-speaking={isCallActive && aiState === 'speaking'}>
@@ -171,8 +203,8 @@
 				{/if}
 			</div>
 			
-			<!-- Right: User Avatar - Links to wallet -->
-			<a href={getWalletUrl()} class="nav-user-link" aria-label="Go to profile">
+			<!-- Right: User Avatar - Links to wallet profile -->
+			<a href={getWalletUrl('/profile')} class="nav-user-link" aria-label="Go to profile">
 				{#if user?.image && !userImageFailed}
 					<img
 						src={user.image}
@@ -188,6 +220,24 @@
 			</a>
 		</div>
 	</nav>
+{:else if pillState === 'hidden'}
+	<!-- Hidden state - render nothing -->
+{:else if pillState === 'cta'}
+	<!-- CTA State: Two separate buttons - Sign up and Login (no wrapper) -->
+	<div class="cta-buttons-container">
+		<a href={ctaHref || getWalletUrl()} class="cta-btn">
+			<span>{ctaText}</span>
+		</a>
+		{#if showLoginButton}
+		<a href={getWalletUrl('/')} class="cta-login-btn" aria-label="Sign in">
+			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+				<polyline points="10 17 15 12 10 7"/>
+				<line x1="15" y1="12" x2="3" y2="12"/>
+			</svg>
+		</a>
+		{/if}
+	</div>
 {:else}
 	<!-- Not authenticated: Google Sign-in Button -->
 	<nav class="nav-pill nav-pill-signin">
@@ -220,38 +270,99 @@
 		gap: 0.625rem;
 		padding: 0.5rem 1rem; /* Reduced padding */
 		border-radius: 1.5rem;
-		border: 1px solid rgba(8, 27, 71, 0.3);
-		background-color: rgba(8, 27, 71, 0.95); /* Default: dark navy */
+		border: 1px solid rgba(0, 26, 66, 0.3); /* Primary 800 */
+		background-color: rgba(0, 26, 66, 0.95); /* Primary 800 - navpill bg */
 		backdrop-filter: blur(24px);
 		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 		color: white;
 		transition: background-color 0.3s ease, border-color 0.3s ease;
 	}
 	
-	/* Color-coded states */
+	/* Color-coded states - using brand colors */
 	.modal-waiting .connection-content {
-		background-color: rgba(250, 204, 21, 0.95); /* Yellow sunflower - waiting for permission */
-		border-color: rgba(253, 224, 71, 0.5);
+		background-color: rgba(244, 208, 63, 0.95); /* Accent 500 - yellow - waiting for permission */
+		border-color: rgba(253, 233, 121, 0.5); /* Accent 300 */
 	}
 	
 	.modal-connecting .connection-content {
-		background-color: rgba(6, 182, 212, 0.95); /* Turquoise blue - connecting */
-		border-color: rgba(103, 232, 249, 0.5);
+		background-color: rgba(45, 166, 180, 0.95); /* Secondary 500 - teal - connecting */
+		border-color: rgba(102, 207, 219, 0.5); /* Secondary 300 */
 	}
 	
 	.modal-listening .connection-content {
-		background-color: rgba(34, 197, 94, 0.95); /* Green - listening */
-		border-color: rgba(134, 239, 172, 0.5);
+		background-color: rgba(76, 169, 132, 0.95); /* Success 500 - green - listening */
+		border-color: rgba(110, 231, 183, 0.5); /* Success 300 */
 	}
 	
 	.modal-thinking .connection-content {
-		background-color: rgba(6, 182, 212, 0.95); /* Turquoise blue - thinking */
-		border-color: rgba(103, 232, 249, 0.5);
+		background-color: rgba(45, 166, 180, 0.95); /* Secondary 500 - teal - thinking */
+		border-color: rgba(102, 207, 219, 0.5); /* Secondary 300 */
 	}
 	
 	.modal-speaking .connection-content {
-		background-color: rgba(250, 204, 21, 0.95); /* Yellow sunflower - speaking */
-		border-color: rgba(253, 224, 71, 0.5);
+		background-color: rgba(244, 208, 63, 0.95); /* Accent 500 - yellow - speaking */
+		border-color: rgba(253, 233, 121, 0.5); /* Accent 300 */
+	}
+	
+	.modal-capability .connection-content {
+		background-color: rgba(0, 26, 66, 0.95); /* Primary 800 */
+		border-color: rgba(0, 26, 66, 0.9);
+		padding: 1rem 1.25rem;
+		gap: 0.75rem;
+		position: relative;
+	}
+	
+	.connection-text-group {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		flex: 1;
+	}
+	
+	.connection-subtext {
+		font-size: 0.75rem;
+		font-weight: 400;
+		color: rgba(255, 255, 255, 0.8);
+		white-space: nowrap;
+	}
+	
+	.request-access-btn {
+		background-color: rgba(0, 66, 170, 0.9); /* Primary 500 */
+		border: 1px solid rgba(0, 66, 170, 0.5);
+		color: white;
+		padding: 0.5rem 1rem;
+		border-radius: 0.5rem;
+		font-size: 0.8125rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s;
+		white-space: nowrap;
+	}
+	
+	.request-access-btn:hover {
+		background-color: rgba(0, 66, 170, 1);
+		transform: translateY(-1px);
+	}
+	
+	.close-modal-btn {
+		position: absolute;
+		top: 0.5rem;
+		right: 0.5rem;
+		background: transparent;
+		border: none;
+		color: rgba(255, 255, 255, 0.7);
+		cursor: pointer;
+		padding: 0.25rem;
+		border-radius: 0.25rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.2s;
+	}
+	
+	.close-modal-btn:hover {
+		background-color: rgba(255, 255, 255, 0.1);
+		color: white;
 	}
 	
 	.connection-icon {
@@ -304,10 +415,13 @@
 		width: fit-content;
 		max-width: calc(100vw - 2rem);
 		border-radius: 9999px;
-		border: 1px solid rgb(6, 20, 54); /* Slightly darker border */
-		background-color: rgb(8, 27, 71); /* 100% solid - no transparency! */
+		border: 1px solid rgba(0, 26, 66, 0.9); /* Primary 800 */
+		background-color: rgba(0, 26, 66, 0.95); /* Primary 800 - navpill bg */
+		backdrop-filter: blur(24px) saturate(180%);
+		-webkit-backdrop-filter: blur(24px) saturate(180%);
 		box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 		padding: 0.1875rem; /* Even smaller padding */
+		transition: all 0.2s;
 	}
 	
 	.nav-container {
@@ -387,13 +501,13 @@
 	}
 	
 	.call-btn-inactive {
-		background: rgb(34, 197, 94); /* Solid green - fully opaque */
-		border: 3px solid rgba(134, 239, 172, 1);
+		background: #4ca984; /* Success brand color - solid green */
+		border: 3px solid rgba(76, 169, 132, 0.8);
 	}
 	
 	.call-btn-inactive:hover:not(:disabled) {
-		background: rgb(22, 163, 74); /* Darker green on hover */
-		box-shadow: 0 12px 24px rgba(34, 197, 94, 0.4);
+		background: #047857; /* Success 700 - darker green on hover */
+		box-shadow: 0 12px 24px rgba(76, 169, 132, 0.4);
 		transform: translateY(-2px) scale(1.05);
 	}
 	
@@ -445,8 +559,78 @@
 	
 	/* Sign-in Mode - matches website style */
 	.nav-pill-signin {
-		/* Outer padding already applied to .nav-pill */
+		border: 1px solid rgba(255, 255, 255, 0.3);
+		background-color: rgba(255, 255, 255, 0.2);
+		backdrop-filter: blur(24px) saturate(180%);
+		-webkit-backdrop-filter: blur(24px) saturate(180%);
 	}
+	
+	/* CTA Mode - clean buttons without wrapper */
+	.cta-buttons-container {
+		position: fixed;
+		bottom: max(env(safe-area-inset-bottom), 0.5rem);
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: 1000;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+	}
+	
+	.cta-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 9999px;
+		border: 1px solid rgba(0, 26, 66, 0.9); /* Primary 800 */
+		background-color: #001a42; /* Primary 800 - buttons and navpill bg */
+		color: #c4d4ed; /* Primary 100 - button text/label color (lighter) */
+		padding: 0.75rem 1.5rem;
+		font-weight: 500;
+		font-size: 0.875rem;
+		box-shadow: 0 2px 4px 0 rgb(0 0 0 / 0.08);
+		backdrop-filter: blur(8px);
+		transition: all 0.2s;
+		cursor: pointer;
+		white-space: nowrap;
+		text-decoration: none;
+		min-height: 44px; /* Ensure consistent height */
+	}
+	
+	.cta-btn:hover {
+		border-color: rgba(0, 38, 98, 0.9); /* Primary 700 */
+		background-color: #002662; /* Primary 700 - button hover */
+		color: #c4d4ed; /* Primary 100 - keep text color */
+		box-shadow: 0 4px 8px -1px rgb(0 0 0 / 0.12);
+		transform: translateY(-1px);
+	}
+	
+	.cta-login-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 44px; /* Match cta-btn height */
+		height: 44px; /* Match cta-btn height */
+		border-radius: 50%; /* Keep fully circular */
+		border: 1px solid rgba(0, 26, 66, 0.9); /* Primary 800 - same as cta-btn */
+		background-color: #001a42; /* Primary 800 - same as cta-btn */
+		color: #c4d4ed; /* Primary 100 - button text/label color (lighter) */
+		transition: all 0.2s;
+		cursor: pointer;
+		text-decoration: none;
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		flex-shrink: 0;
+	}
+	
+	.cta-login-btn:hover {
+		background-color: #002662; /* Primary 700 - button hover */
+		border-color: rgba(0, 38, 98, 0.9); /* Primary 700 */
+		color: #c4d4ed; /* Primary 100 - keep text color */
+		transform: scale(1.05);
+	}
+	
 	
 	.signin-btn {
 		display: flex;
@@ -454,9 +638,9 @@
 		justify-content: center;
 		gap: 0.5rem;
 		border-radius: 9999px;
-		border: 1px solid rgba(8, 27, 71, 0.9);
-		background-color: rgba(8, 27, 71, 0.85); /* 85% opacity navy blue */
-		color: #ffffff;
+		border: 1px solid rgba(0, 26, 66, 0.9); /* Primary 800 */
+		background-color: #001a42; /* Primary 800 - buttons bg */
+		color: #c4d4ed; /* Primary 100 - button text/label color (lighter) */
 		padding: 0.75rem 1.5rem;
 		font-weight: 500;
 		font-size: 0.875rem;
@@ -468,8 +652,9 @@
 	}
 	
 	.signin-btn:hover {
-		border-color: rgba(8, 27, 71, 1);
-		background-color: rgba(8, 27, 71, 0.95);
+		border-color: rgba(0, 38, 98, 0.9); /* Primary 700 */
+		background-color: #002662; /* Primary 700 - button hover */
+		color: #c4d4ed; /* Primary 100 - keep text color */
 		box-shadow: 0 4px 8px -1px rgb(0 0 0 / 0.12);
 		transform: translateY(-1px);
 	}
@@ -489,6 +674,11 @@
 		}
 		
 		.signin-btn {
+			padding: 0.625rem 1.25rem;
+			font-size: 0.8125rem;
+		}
+		
+		.cta-btn {
 			padding: 0.625rem 1.25rem;
 			font-size: 0.8125rem;
 		}
@@ -516,12 +706,19 @@
 	}
 	
 	@media (max-width: 480px) {
-		.signin-btn span {
+		.signin-btn span,
+		.cta-btn span {
 			display: none;
 		}
 		
-		.signin-btn {
+		.signin-btn,
+		.cta-btn {
 			padding: 0.625rem;
+		}
+		
+		.cta-login-btn {
+			width: 36px;
+			height: 36px;
 		}
 		
 		.call-btn {
