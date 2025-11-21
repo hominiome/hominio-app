@@ -95,6 +95,34 @@
         return `${protocol}://${walletDomain}`;
     }
 
+    async function addHotelCapability(groupId: string) {
+        loading = true;
+        error = null;
+        try {
+            const walletUrl = getWalletUrl();
+            const response = await fetch(`${walletUrl}/api/admin/capability-groups/hominio-explorer/add-hotel-capability`, {
+                method: "POST",
+                credentials: "include",
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || "Failed to add hotel capability");
+            }
+
+            const data = await response.json();
+            console.log("[Admin] Hotel capability added:", data);
+            
+            // Refresh groups to show the new capability
+            await refreshRequests();
+        } catch (err) {
+            error = err instanceof Error ? err.message : "Unknown error";
+            console.error("[Admin] Error adding hotel capability:", err);
+        } finally {
+            loading = false;
+        }
+    }
+
     async function refreshRequests() {
         loading = true;
         error = null;
@@ -542,9 +570,22 @@
                     {#each capabilityGroups as group (group.id)}
                         <GlassCard class="p-6">
                             <div class="mb-4">
-                                <h3 class="text-xl font-bold text-slate-900 mb-1">{group.title}</h3>
-                                <p class="text-sm text-slate-600">{group.description || 'No description'}</p>
-                                <p class="text-xs text-slate-500 mt-1">Group: {group.name}</p>
+                                <div class="flex items-start justify-between mb-2">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-slate-900 mb-1">{group.title}</h3>
+                                        <p class="text-sm text-slate-600">{group.description || 'No description'}</p>
+                                        <p class="text-xs text-slate-500 mt-1">Group: {group.name}</p>
+                                    </div>
+                                    {#if group.name === 'hominio-explorer'}
+                                        <button
+                                            onclick={() => addHotelCapability(group.id)}
+                                            disabled={loading}
+                                            class="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            Add Hotel Capability
+                                        </button>
+                                    {/if}
+                                </div>
                             </div>
                             
                             <div class="border-t border-slate-200 pt-4">
