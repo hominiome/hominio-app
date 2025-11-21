@@ -229,36 +229,19 @@
 						<!-- Group Capabilities (with collapsible sub-capabilities) -->
 						{#each groupCapabilities as groupCap (groupCap.id)}
 							{@const isExpanded = expandedGroups.has(groupCap.id)}
-							<GlassCard class="capability-card">
+							<GlassCard class="capability-card group-capability-card">
 								<div class="capability-header">
 									<!-- Left: Title and Description -->
 									<div class="capability-title-section">
 										<div class="flex items-center gap-2 mb-1">
-											<button
-												onclick={() => {
-													if (isExpanded) {
-														expandedGroups.delete(groupCap.id);
-													} else {
-														expandedGroups.add(groupCap.id);
-													}
-													expandedGroups = expandedGroups; // Trigger reactivity
-												}}
-												class="flex items-center justify-center w-6 h-6 rounded transition-colors hover:bg-slate-100"
-											>
-												<svg
-													class="w-4 h-4 text-slate-600 transition-transform {isExpanded ? 'rotate-90' : ''}"
-													fill="none"
-													stroke="currentColor"
-													viewBox="0 0 24 24"
-												>
-													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-												</svg>
-											</button>
 											{#if groupCap.title}
 												<h3 class="capability-title">{groupCap.title}</h3>
 											{/if}
-											<span class="inline-block rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800">
-												Group ({groupCap.subCapabilities?.length || 0} capabilities)
+											<span class="group-capability-badge">
+												<span class="group-capability-badge-icon">👥</span>
+												<span class="group-capability-badge-text">
+													{groupCap.subCapabilities?.length || 0} {groupCap.subCapabilities?.length === 1 ? 'capability' : 'capabilities'}
+												</span>
 											</span>
 										</div>
 										{#if groupCap.description}
@@ -281,9 +264,38 @@
 									</div>
 								</div>
 								
+								<!-- Expand/Collapse Button at Bottom -->
+								<div class="group-capability-toggle">
+									<button
+										onclick={() => {
+											const newSet = new Set(expandedGroups);
+											if (isExpanded) {
+												newSet.delete(groupCap.id);
+											} else {
+												newSet.add(groupCap.id);
+											}
+											expandedGroups = newSet;
+										}}
+										class="group-toggle-button"
+										type="button"
+									>
+										<span class="group-toggle-text">
+											{isExpanded ? 'Hide' : 'Show'} capabilities
+										</span>
+										<svg
+											class="group-toggle-icon {isExpanded ? 'expanded' : ''}"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+										</svg>
+									</button>
+								</div>
+								
 								<!-- Collapsible Sub-capabilities -->
 								{#if isExpanded && groupCap.subCapabilities && groupCap.subCapabilities.length > 0}
-									<div class="border-t border-slate-200 pt-4 mt-4 space-y-3 pl-8">
+									<div class="group-capabilities-list">
 										{#each groupCap.subCapabilities as subCap (subCap.id)}
 											<div class="capability-sub-item">
 												<div class="flex items-center gap-2 mb-1">
@@ -476,11 +488,90 @@
 		flex-shrink: 0;
 	}
 	
-	.capability-sub-item {
-		padding: 0.75rem;
-		background: rgba(255, 255, 255, 0.3);
+	.group-capability-card {
+		position: relative;
+	}
+	
+	.group-capability-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		padding: 0.375rem 0.75rem;
+		background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+		border-radius: 9999px;
+		box-shadow: 0 2px 4px rgba(168, 85, 247, 0.2);
+	}
+	
+	.group-capability-badge-icon {
+		font-size: 0.875rem;
+		line-height: 1;
+	}
+	
+	.group-capability-badge-text {
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: white;
+		letter-spacing: 0.025em;
+	}
+	
+	.group-capability-toggle {
+		border-top: 1px solid rgba(148, 163, 184, 0.2);
+		margin-top: 1rem;
+		padding-top: 0.75rem;
+	}
+	
+	.group-toggle-button {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		width: 100%;
+		padding: 0.625rem 1rem;
+		background: rgba(168, 85, 247, 0.1);
+		border: 1px solid rgba(168, 85, 247, 0.2);
 		border-radius: 0.5rem;
-		border: 1px solid rgba(148, 163, 184, 0.2);
+		color: #9333ea;
+		font-size: 0.875rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+	
+	.group-toggle-button:hover {
+		background: rgba(168, 85, 247, 0.15);
+		border-color: rgba(168, 85, 247, 0.3);
+	}
+	
+	.group-toggle-text {
+		color: #9333ea;
+	}
+	
+	.group-toggle-icon {
+		width: 1rem;
+		height: 1rem;
+		color: #9333ea;
+		transition: transform 0.2s ease;
+	}
+	
+	.group-toggle-icon.expanded {
+		transform: rotate(180deg);
+	}
+	
+	.group-capabilities-list {
+		margin-top: 1rem;
+		padding-top: 1rem;
+		border-top: 1px solid rgba(148, 163, 184, 0.2);
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+	
+	.capability-sub-item {
+		padding: 0.875rem 1rem;
+		background: rgba(255, 255, 255, 0.4);
+		border-radius: 0.5rem;
+		border: 1px solid rgba(148, 163, 184, 0.15);
+		backdrop-filter: blur(4px);
 	}
 	
 	/* Mobile Responsive Styles */
