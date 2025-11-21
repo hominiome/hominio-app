@@ -87,6 +87,7 @@ jobs:
             PUBLIC_DOMAIN_ROOT="${{ secrets.PUBLIC_DOMAIN_ROOT }}" \
             PUBLIC_DOMAIN_APP="${{ secrets.PUBLIC_DOMAIN_APP }}" \
             PUBLIC_DOMAIN_WALLET="${{ secrets.PUBLIC_DOMAIN_WALLET }}" \
+            PUBLIC_DOMAIN_API="${{ secrets.PUBLIC_DOMAIN_API }}" \
             PUBLIC_DOMAIN_SYNC="${{ secrets.PUBLIC_DOMAIN_SYNC }}" \
             AUTH_SECRET="${{ secrets.AUTH_SECRET }}" \
             GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \

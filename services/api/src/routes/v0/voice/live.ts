@@ -67,11 +67,25 @@ export const voiceLiveHandler = {
 
         let authData: AuthData | null = null;
         if (request) {
+            // Log request details for debugging
+            const cookieHeader = request.headers.get("cookie");
+            const origin = request.headers.get("origin");
+            console.log(`[voice/live] 🔍 WebSocket upgrade request details:`, {
+                hasCookies: !!cookieHeader,
+                cookieCount: cookieHeader ? cookieHeader.split(';').length : 0,
+                origin: origin || 'missing',
+                url: request.url
+            });
+            
             try {
                 authData = await requireWebSocketAuth(request);
-            } catch (error) {
+            } catch (error: any) {
                 console.error("[voice/live] Authentication failed:", error);
-                ws.close(1008, "Authentication failed: Unauthorized");
+                console.error("[voice/live] Error details:", {
+                    message: error?.message,
+                    stack: error?.stack
+                });
+                ws.close(1008, `Authentication failed: ${error?.message || "Unauthorized"}`);
                 return;
             }
         } else {
