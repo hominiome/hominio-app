@@ -81,7 +81,7 @@
 								<div class="bg-[#2da6b4] text-white px-3 sm:px-6 py-3 sm:py-4 flex flex-col items-center justify-center flex-shrink-0 w-[100px] sm:w-[140px]">
 									<div class="text-base sm:text-2xl font-bold whitespace-nowrap text-center leading-tight">{formatPrice(item.price)}</div>
 									{#if item.type}
-										<div class="text-[8px] sm:text-[10px] uppercase tracking-wide mt-0.5 sm:mt-1 opacity-90 text-center leading-tight">{item.type}</div>
+										<div class="text-[6px] sm:text-[8px] uppercase tracking-wide mt-0.5 sm:mt-1 opacity-75 text-center leading-tight">{item.type}</div>
 									{/if}
 								</div>
 							</GlassCard>
