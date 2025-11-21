@@ -596,7 +596,7 @@
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0;
-		min-height: 42px;
+		min-height: 48px;
 	}
 	
 	/* Logo Link */
