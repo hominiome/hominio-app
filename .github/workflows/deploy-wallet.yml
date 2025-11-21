@@ -92,6 +92,7 @@ jobs:
             GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
             GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
             WALLET_POSTGRES_SECRET="${{ secrets.WALLET_POSTGRES_SECRET }}" \
+            ZERO_POSTGRES_SECRET="${{ secrets.ZERO_POSTGRES_SECRET }}" \
             ADMIN="${{ secrets.ADMIN }}" \
             POLAR_API_KEY="${{ secrets.POLAR_API_KEY }}" \
             NODE_ENV="production" \
