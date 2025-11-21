@@ -244,6 +244,137 @@ export async function migrateCapabilities(dbInstance: Kysely<any>) {
 }
 
 /**
+ * Migrate capabilities to use schema ID instead of old naming conventions
+ * Updates capabilities that use old formats (like "hotel-schema-v1") to use the schema ID (nanoid)
+ */
+export async function migrateCapabilitiesToSchemaIds(dbInstance: Kysely<any>) {
+  console.log("🔄 Migrating capabilities to use schema IDs...\n");
+
+  if (!zeroDb) {
+    console.log("⚠️  ZERO_POSTGRES_SECRET not set. Cannot migrate capabilities to schema IDs.\n");
+    console.log("   Skipping capability migration. Set ZERO_POSTGRES_SECRET to enable.\n");
+    return;
+  }
+
+  try {
+    // Get admin username for name-scoped schema lookup
+    const ADMIN = process.env.ADMIN;
+    let adminUsername = "@hominio"; // Default fallback
+    
+    if (ADMIN) {
+      try {
+        const adminUser = await dbInstance
+          .selectFrom("user")
+          .select(["username"])
+          .where("id", "=", ADMIN)
+          .executeTakeFirst();
+        if (adminUser?.username) {
+          adminUsername = adminUser.username;
+        }
+      } catch (error) {
+        console.log(`⚠️  Could not fetch admin username, using default: ${adminUsername}\n`);
+      }
+    }
+
+    // Find all capabilities with resource_type = 'data' that might need updating
+    // These could have old formats like "hotel-schema-v1" or name-scoped identifiers
+    const dataCapabilities = await dbInstance
+      .selectFrom("capabilities")
+      .selectAll()
+      .where("resource_type", "=", "data")
+      .execute();
+
+    console.log(`📊 Found ${dataCapabilities.length} data capabilities to check\n`);
+
+    let updatedCount = 0;
+    let skippedCount = 0;
+
+    for (const capability of dataCapabilities) {
+      const currentNamespace = capability.resource_namespace;
+      
+      // Skip "schema" namespace (that's for schema management, not a schema ID)
+      if (currentNamespace === "schema") {
+        skippedCount++;
+        continue;
+      }
+      
+      // Skip if already using a schema ID format (nanoid-like, typically 21 chars)
+      // Schema IDs are nanoids, which are typically 21 characters and don't contain @ or /
+      // Name-scoped identifiers like "@hominio/hotel-v1" should be converted to schema IDs
+      if (currentNamespace.length === 21 && currentNamespace.match(/^[A-Za-z0-9_-]+$/) && !currentNamespace.includes('@') && !currentNamespace.includes('/')) {
+        skippedCount++;
+        continue;
+      }
+
+      // Try to find schema by old format names
+      let schemaId: string | null = null;
+      let schemaName: string | null = null;
+
+      // Try different possible old formats
+      const possibleNames = [
+        currentNamespace, // Try as-is first (might already be name-scoped like @hominio/hotel-v1)
+        currentNamespace.replace(/^hotel-schema/, `${adminUsername}/hotel`), // hotel-schema-v1 -> @hominio/hotel-v1
+        currentNamespace.replace(/^hotel-schema-v(\d+)$/, `${adminUsername}/hotel-v$1`), // hotel-schema-v1 -> @hominio/hotel-v1 (with version)
+        currentNamespace.replace(/^schema-/, `${adminUsername}/`), // schema-* -> @hominio/*
+        `${adminUsername}/${currentNamespace}`, // Just prepend scope
+        `${adminUsername}/${currentNamespace}-v1`, // Add -v1 suffix
+        currentNamespace.replace(/^data:/, ''), // Remove data: prefix if present
+      ];
+
+      for (const nameToTry of possibleNames) {
+        try {
+          const schemaResult = await sql`
+            SELECT id, name FROM schema 
+            WHERE name = ${nameToTry}
+            LIMIT 1
+          `.execute(zeroDb);
+
+          if (schemaResult.rows.length > 0) {
+            schemaId = schemaResult.rows[0].id as string;
+            schemaName = schemaResult.rows[0].name as string;
+            console.log(`✅ Found schema: ${schemaName} (ID: ${schemaId})\n`);
+            break;
+          }
+        } catch (error) {
+          // Continue to next name
+        }
+      }
+
+      if (!schemaId) {
+        console.log(`⚠️  Could not find schema for namespace "${currentNamespace}", skipping capability ${capability.id}\n`);
+        skippedCount++;
+        continue;
+      }
+
+      // Update capability to use schema ID
+      try {
+        await dbInstance
+          .updateTable("capabilities")
+          .set({
+            resource_namespace: schemaId,
+            updated_at: sql`NOW()`,
+          })
+          .where("id", "=", capability.id)
+          .execute();
+
+        console.log(`✅ Updated capability ${capability.id}: ${currentNamespace} -> ${schemaId} (${schemaName})\n`);
+        updatedCount++;
+      } catch (error: any) {
+        console.error(`❌ Error updating capability ${capability.id}: ${error.message}\n`);
+      }
+    }
+
+    console.log(`\n✅ Capability migration completed!\n`);
+    console.log(`   Updated: ${updatedCount} capabilities\n`);
+    console.log(`   Skipped: ${skippedCount} capabilities\n`);
+  } catch (error: any) {
+    console.error("❌ Error migrating capabilities to schema IDs:", error.message);
+    // Don't throw - this is optional, migration can continue
+    console.log("⚠️  Continuing migration despite capability update error...\n");
+  }
+}
+
+/**
  * Seed admin username (only if ADMIN is set)
  * Sets admin username to "@hominio" for name-scoped schema IDs
  */
@@ -542,6 +673,7 @@ export async function seedAdminCapabilities(dbInstance: Kysely<any>) {
 // This allows running: bun run auth.migrate.ts
 if (import.meta.main) {
   migrateCapabilities(db)
+    .then(() => migrateCapabilitiesToSchemaIds(db))
     .then(() => seedAdminUsername(db))
     .then(() => seedAdminCapabilities(db))
     .then(() => {
