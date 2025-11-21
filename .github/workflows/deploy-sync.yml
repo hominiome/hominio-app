@@ -155,6 +155,7 @@ jobs:
           bun run scripts/zero-migrate.js
         env:
           ZERO_POSTGRES_SECRET: ${{ secrets.ZERO_POSTGRES_SECRET }}
+          ADMIN: ${{ secrets.ADMIN }}
 
       - name: Deploy Zero schema permissions
         run: |

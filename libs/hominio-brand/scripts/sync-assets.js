@@ -21,11 +21,30 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 // Paths
 const brandAssetsDir = resolve(__dirname, '../src/assets');
 const monorepoRoot = resolve(__dirname, '../../..');
-const serviceStaticDirs = [
-	resolve(monorepoRoot, 'services/app/static/brand'),
-	resolve(monorepoRoot, 'services/wallet/static/brand'),
-	resolve(monorepoRoot, 'services/website/static/brand'),
-];
+
+// Detect if we're in Docker build context (service copied to root) or normal monorepo
+// In Docker: services/app/ . is copied to /app, so static/ is at /app/static/
+// In monorepo: static/ is at services/app/static/
+const isDockerContext = existsSync(resolve(monorepoRoot, 'package.json')) && 
+                         !existsSync(resolve(monorepoRoot, 'services'));
+
+// Get current working directory to detect which service we're building
+const cwd = process.cwd();
+const isAppService = cwd.includes('app') || existsSync(resolve(cwd, 'src-tauri'));
+const isWalletService = cwd.includes('wallet');
+const isWebsiteService = cwd.includes('website');
+
+const serviceStaticDirs = isDockerContext
+	? [
+		// Docker build context: sync to current service's static folder
+		resolve(cwd, 'static/brand'),
+	]
+	: [
+		// Normal monorepo context: sync to all services
+		...(isAppService || !isDockerContext ? [resolve(monorepoRoot, 'services/app/static/brand')] : []),
+		...(isWalletService || !isDockerContext ? [resolve(monorepoRoot, 'services/wallet/static/brand')] : []),
+		...(isWebsiteService || !isDockerContext ? [resolve(monorepoRoot, 'services/website/static/brand')] : []),
+	].filter(Boolean);
 
 /**
  * Copy a single file to all service static directories (preserves subfolder structure)

@@ -22,6 +22,8 @@ COPY --from=install /temp/dev/node_modules /app/node_modules
 COPY --from=install /temp/dev/libs /app/libs
 # Copy wallet service files
 COPY services/wallet/ .
+# Sync brand assets to static folder before build
+RUN node libs/hominio-brand/scripts/sync-assets.js
 RUN cd /app && bun run build
 
 # Production image
