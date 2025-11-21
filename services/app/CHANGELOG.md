@@ -1,3 +1,36 @@
+# [0.13.0](https://github.com/hominiome/hominio/compare/v0.12.15...v0.13.0) (2025-11-21)
+
+
+### Bug Fixes
+
+* add admin auth check to auto-assign endpoint and improve nav pill ([159265d](https://github.com/hominiome/hominio/commit/159265d4052fab6d0d482d085f35803514b2b92d))
+* align back button with nav pill styling and positioning ([e91567a](https://github.com/hominiome/hominio/commit/e91567ab42c75658c6bb017c6f37ebac83fb4135))
+* correct NeonDialect import from kysely-neon package ([2d0e94f](https://github.com/hominiome/hominio/commit/2d0e94f868b55a7f4390215d8d3e4e6fca6b23eb))
+* decrease nav pill bar height to 36px ([a430c01](https://github.com/hominiome/hominio/commit/a430c01262758f24fe4270770101af8084e02ad4))
+* enforce exact 36px height for nav pill on all screen sizes ([ac441bf](https://github.com/hominiome/hominio/commit/ac441bf19b4dfd6706a43a906468bea80b457c97))
+* enlarge back/home buttons to 56px on tablet and desktop ([92164cf](https://github.com/hominiome/hominio/commit/92164cfce3151b681460ad53585d30e248511ca4))
+* filter out group capabilities from admin capabilities list ([e8d94b2](https://github.com/hominiome/hominio/commit/e8d94b29e59fd2e950c098b2672e9f0040e8a0bb))
+* improve group capability styling and fix collapsible functionality ([e1afb1a](https://github.com/hominiome/hominio/commit/e1afb1ab2ca5ea768891d348f5db042d6838ab4a))
+* improve group capability UI and add admin authentication ([e888883](https://github.com/hominiome/hominio/commit/e888883e762699db48a336a0e3e06933e078e081))
+* improve nav pill button sizes and spacing, remove back to app label ([a14fbe7](https://github.com/hominiome/hominio/commit/a14fbe776939d4d76f6ff879eef828bad0bd1586))
+* increase nav pill bar height to 48px ([ce7ce05](https://github.com/hominiome/hominio/commit/ce7ce053a29a7586d72a715fae64164099c3937f))
+* keep back/home button size on tablet, only enlarge on desktop ([ce0c97a](https://github.com/hominiome/hominio/commit/ce0c97a731439d40d98b1ac8905a2f7ed0171185))
+* keep call button size on tablet and enlarge back/home buttons ([6b158c1](https://github.com/hominiome/hominio/commit/6b158c1e63ee2b34d0db1270050ff4c06c8d2f9f))
+* left-align collapse button and capability counter with proper padding ([92c81e3](https://github.com/hominiome/hominio/commit/92c81e365b90fb6dd32de10922bd8164d72ed270))
+* make group capability UI more subtle with lighter colors and icon-only button ([2fcfd01](https://github.com/hominiome/hominio/commit/2fcfd018ac8216537934ac2940ed237e1f3c6d19))
+* match bottom padding to top padding in group capability toggle row ([d1fe3fd](https://github.com/hominiome/hominio/commit/d1fe3fd75576f0c7b19df79287e1bf0600214287))
+* mobile NavPill label, menu back button, call button shadow, and group capabilities display ([d624f7a](https://github.com/hominiome/hominio/commit/d624f7a9ce749e96381edec963a09983190ba04d))
+* revert nav pill height constraints to restore layout ([1fa75fb](https://github.com/hominiome/hominio/commit/1fa75fb668d9b231df4daecbcec79b8ff90c3696))
+* use brand colors, remove emoji, improve group capability UI ([42fdd46](https://github.com/hominiome/hominio/commit/42fdd4679d5187cdcb410b5e39efda749e546943))
+
+
+### Features
+
+* add API endpoint and admin UI button to add hotel capability to Hominio Explorer group ([1c990b1](https://github.com/hominiome/hominio/commit/1c990b1b4b75630ad6997a80fe56ca7f04c67f9a))
+* add home button to Charles route and make buttons larger ([04edc9f](https://github.com/hominiome/hominio/commit/04edc9f67ce06bac5a9b0f07182a105aa8d48069))
+* add read all schemas capability to Hominio Explorer group ([b864334](https://github.com/hominiome/hominio/commit/b86433430c183509e63e277ee6cb7930abc7e083))
+* show group capabilities with collapsible sub-capabilities in My Capabilities ([d4b5d08](https://github.com/hominiome/hominio/commit/d4b5d08df34c0ee0e79726108b9e7e34851ee1ec))
+
 ## [0.12.15](https://github.com/hominiome/hominio/compare/v0.12.14...v0.12.15) (2025-11-21)
 
 
