@@ -241,6 +241,32 @@
 	background: linear-gradient(to bottom right, #f8f9fa, #f2f4f6, #e9ecef);
 }
 
+/* iOS Safe Area Background Fill - Top (Status Bar) */
+body::before {
+	content: '';
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: env(safe-area-inset-top);
+	background: linear-gradient(to bottom right, #f8f9fa, #f2f4f6, #e9ecef);
+	z-index: 9999;
+	pointer-events: none;
+}
+
+/* iOS Safe Area Background Fill - Bottom (Home Indicator) */
+body::after {
+	content: '';
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: env(safe-area-inset-bottom);
+	background: linear-gradient(to bottom right, #f8f9fa, #f2f4f6, #e9ecef);
+	z-index: 9999;
+	pointer-events: none;
+}
+
 /* Alert styles */
 .alert-warning {
 	border-radius: 1rem; /* rounded-2xl */
