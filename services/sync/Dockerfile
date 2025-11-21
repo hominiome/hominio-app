@@ -18,7 +18,6 @@ ENTRYPOINT []
 # Required: --change-db (change database for replication log - uses same as upstream-db if not specified)
 # Required: --replica-file (SQLite replica location in /data mount)
 # Required: --auth-secret (for JWT verification)
-# Required: --admin-password (for admin endpoints - uses ZERO_AUTH_SECRET)
 # Required: --get-queries-url (for synced queries)
 # Required: --push-url (for custom mutators)
 # Cookie forwarding: --get-queries-forward-cookies and --mutate-forward-cookies

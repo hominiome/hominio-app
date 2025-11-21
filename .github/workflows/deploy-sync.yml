@@ -178,4 +178,3 @@ jobs:
             echo "⚠️  Certificate not yet issued. This is normal if DNS hasn't propagated yet."
             echo "   Certificate will be automatically provisioned once DNS CNAME record is configured."
           }
-
