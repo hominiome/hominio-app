@@ -179,19 +179,18 @@ export function createMutators(authData: AuthData | undefined) {
         tx: Transaction<Schema>,
         args: {
           id: string;
+          name: string; // Name-scoped identifier (e.g., "@hominio/hotel-v1")
           ownedBy: string;
-          data: string; // JSON Schema as JSON string
+          data: any; // JSON Schema as object (Zero's json() type handles it)
         }
       ) => {
-        // Validate JSON Schema structure
-        let schemaDefinition: any;
-        try {
-          schemaDefinition = typeof args.data === 'string' ? JSON.parse(args.data) : args.data;
-        } catch (parseError) {
-          throw new Error(`Invalid JSON Schema: ${parseError instanceof Error ? parseError.message : 'Parse error'}`);
+        // Validate name format (must be name-scoped: @scope/name-v1)
+        if (!args.name || !args.name.match(/^@[\w-]+\/[\w-]+-v\d+$/)) {
+          throw new Error('Schema name must be in format @scope/name-v1 (e.g., @hominio/hotel-v1)');
         }
-
-        // Basic validation: must be an object with $schema or type property
+        
+        // Validate JSON Schema structure
+        const schemaDefinition = args.data;
         if (typeof schemaDefinition !== 'object' || schemaDefinition === null) {
           throw new Error('Schema data must be a valid JSON object');
         }
@@ -203,8 +202,9 @@ export function createMutators(authData: AuthData | undefined) {
         // Insert schema (Zero's json() type handles JSON serialization automatically)
         await tx.mutate.schema.insert({
           id: args.id,
+          name: args.name,
           ownedBy: args.ownedBy,
-          data: typeof args.data === 'string' ? JSON.parse(args.data) : args.data,
+          data: schemaDefinition,
         });
       },
 
@@ -217,10 +217,15 @@ export function createMutators(authData: AuthData | undefined) {
         tx: Transaction<Schema>,
         args: {
           id: string;
-          data?: string; // JSON Schema as JSON string
+          name?: string; // Name-scoped identifier (optional on update)
+          data?: any; // JSON Schema as object
           ownedBy?: string;
         }
       ) => {
+        // Validate name format if provided
+        if (args.name && !args.name.match(/^@[\w-]+\/[\w-]+-v\d+$/)) {
+          throw new Error('Schema name must be in format @scope/name-v1 (e.g., @hominio/hotel-v1)');
+        }
         const { id, ...updates } = args;
 
         // Check if schema exists
@@ -231,16 +236,15 @@ export function createMutators(authData: AuthData | undefined) {
 
         // If updating data, validate JSON Schema structure
         if (updates.data !== undefined) {
-          let schemaDefinition: any;
-          try {
-            schemaDefinition = typeof updates.data === 'string' ? JSON.parse(updates.data) : updates.data;
-          } catch (parseError) {
-            throw new Error(`Invalid JSON Schema: ${parseError instanceof Error ? parseError.message : 'Parse error'}`);
-          }
-
+          const schemaDefinition = updates.data;
+          
           // Basic validation
           if (typeof schemaDefinition !== 'object' || schemaDefinition === null) {
             throw new Error('Schema data must be a valid JSON object');
+          }
+
+          if (!schemaDefinition.type && !schemaDefinition.$schema) {
+            throw new Error('Schema must have a type or $schema property');
           }
 
           // Check if any data entries reference this schema

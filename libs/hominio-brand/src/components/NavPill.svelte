@@ -73,21 +73,44 @@
 		if (typeof window === 'undefined') return '/';
 		
 		const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.startsWith('127.0.0.1');
-		let appDomain = 'localhost:4202'; // Default for dev
 		
 		if (isProduction) {
 			const hostname = window.location.hostname;
+			
+			// If already on app domain (even if doubled like app.app.hominio.me), return relative path
+			// This prevents doubling the domain when clicking the logo
+			if (hostname.includes('.app.') || hostname.startsWith('app.')) {
+				return '/';
+			}
+			
+			// If on wallet or website, redirect to app
 			if (hostname.startsWith('wallet.')) {
-				appDomain = hostname.replace('wallet.', 'app.');
+				const rootDomain = hostname.replace('wallet.', '');
+				// Ensure we don't double the app prefix
+				if (rootDomain.startsWith('app.')) {
+					return `https://${rootDomain}`;
+				}
+				return `https://app.${rootDomain}`;
 			} else if (hostname.startsWith('website.')) {
-				appDomain = hostname.replace('website.', 'app.');
+				const rootDomain = hostname.replace('website.', '');
+				// Ensure we don't double the app prefix
+				if (rootDomain.startsWith('app.')) {
+					return `https://${rootDomain}`;
+				}
+				return `https://app.${rootDomain}`;
 			} else {
-				appDomain = `app.${hostname.replace(/^www\./, '')}`;
+				// Extract root domain (remove www. if present)
+				const rootDomain = hostname.replace(/^www\./, '');
+				// Only add app. prefix if not already present (check for app. anywhere)
+				if (!rootDomain.includes('.app.') && !rootDomain.startsWith('app.')) {
+					return `https://app.${rootDomain}`;
+				}
+				return '/';
 			}
 		}
 		
-		const protocol = appDomain.startsWith('localhost') || appDomain.startsWith('127.0.0.1') ? 'http' : 'https';
-		return `${protocol}://${appDomain}`;
+		// Development: return relative path
+		return '/';
 	}
 </script>
 

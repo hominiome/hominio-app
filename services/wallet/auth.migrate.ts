@@ -28,18 +28,29 @@ try {
 }
 
 const DATABASE_URL = process.env.WALLET_POSTGRES_SECRET;
+const ZERO_DATABASE_URL = process.env.ZERO_POSTGRES_SECRET;
 const AUTH_SECRET = process.env.AUTH_SECRET || "temp-secret-for-migration";
 
 if (!DATABASE_URL) {
   throw new Error("WALLET_POSTGRES_SECRET environment variable is required");
 }
 
-// Create Kysely instance
+// Create Kysely instance for wallet database (auth + capabilities)
 const db = new Kysely({
   dialect: new NeonDialect({
     neon: neon(DATABASE_URL),
   }),
 });
+
+// Create Kysely instance for Zero database (schemas) - only if ZERO_POSTGRES_SECRET is available
+let zeroDb: Kysely<any> | null = null;
+if (ZERO_DATABASE_URL) {
+  zeroDb = new Kysely({
+    dialect: new NeonDialect({
+      neon: neon(ZERO_DATABASE_URL),
+    }),
+  });
+}
 
 // Minimal BetterAuth instance for migrations
 export const auth = betterAuth({
@@ -108,6 +119,38 @@ export async function migrateCapabilities(dbInstance: Kysely<any>) {
       .execute();
 
     console.log("✅ Created capability_requests table");
+
+    // Add username column to user table (if it doesn't exist)
+    // Username is optional (nullable), unique, and used for name-scoped schema IDs (e.g., @hominio/hotel-v1)
+    // Admin user will have username "@hominio" set via seedAdminUsername()
+    try {
+      // Check if username column exists
+      const columnCheck = await sql`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'user' AND column_name = 'username'
+      `.execute(dbInstance);
+
+      if (columnCheck.rows.length === 0) {
+        console.log("📝 Adding username column to user table (optional, unique)...\n");
+        // Add as nullable (optional) with unique constraint
+        await dbInstance.schema
+          .alterTable("user")
+          .addColumn("username", "varchar(255)", (col) => col.unique())
+          .execute();
+        console.log("✅ Added username column to user table\n");
+        console.log("   Column is optional (nullable) and unique\n");
+      } else {
+        console.log("ℹ️  Username column already exists in user table\n");
+      }
+    } catch (error: any) {
+      if (error.message?.includes("already exists") || error.message?.includes("duplicate")) {
+        console.log("ℹ️  Username column or constraint already exists\n");
+      } else {
+        console.error("⚠️  Error adding username column:", error.message);
+        console.log("   Continuing migration...\n");
+      }
+    }
 
     // Create indexes
     try {
@@ -197,6 +240,56 @@ export async function migrateCapabilities(dbInstance: Kysely<any>) {
   } catch (error) {
     console.error("❌ Capabilities migration failed:", error);
     throw error;
+  }
+}
+
+/**
+ * Seed admin username (only if ADMIN is set)
+ * Sets admin username to "@hominio" for name-scoped schema IDs
+ */
+export async function seedAdminUsername(dbInstance: Kysely<any>) {
+  const ADMIN = process.env.ADMIN;
+
+  if (!ADMIN) {
+    console.log("ℹ️  ADMIN not set, skipping admin username seeding\n");
+    return;
+  }
+
+  console.log("📝 Checking if admin username seeding is needed...\n");
+
+  try {
+    // Check if admin already has a username
+    const adminUser = await dbInstance
+      .selectFrom("user")
+      .select(["id", "username"])
+      .where("id", "=", ADMIN)
+      .executeTakeFirst();
+
+    if (!adminUser) {
+      console.log(`⚠️  Admin user ${ADMIN} not found in user table. Skipping username seeding.\n`);
+      return;
+    }
+
+    if (adminUser.username) {
+      console.log(`ℹ️  Admin already has username: ${adminUser.username}\n`);
+      return;
+    }
+
+    // Set admin username to "@hominio"
+    console.log(`📝 Setting admin username to "@hominio"...\n`);
+    await dbInstance
+      .updateTable("user")
+      .set({ username: "@hominio" })
+      .where("id", "=", ADMIN)
+      .execute();
+
+    console.log("✅ Admin username set successfully!\n");
+    console.log(`   User ID: ${ADMIN}\n`);
+    console.log(`   Username: @hominio\n`);
+  } catch (error: any) {
+    console.error("❌ Error seeding admin username:", error.message);
+    // Don't throw - this is optional, migration can continue
+    console.log("⚠️  Continuing migration despite admin username seeding error...\n");
   }
 }
 
@@ -322,48 +415,121 @@ export async function seedAdminCapabilities(dbInstance: Kysely<any>) {
     }
 
     // Grant admin wildcard access to hotel data entries only (not all data)
-    // This allows CRUD operations on hotels (data entries with schema='hotel-schema-v1')
-    const existingHotelCapability = await dbInstance
-      .selectFrom("capabilities")
-      .selectAll()
-      .where("principal", "=", principal)
-      .where("resource_type", "=", "data")
-      .where("resource_namespace", "=", "hotel-schema-v1")
-      .where("resource_id", "=", "*")
-      .executeTakeFirst();
-
-    if (!existingHotelCapability) {
-      console.log(`📝 Granting hotel data wildcard capability to admin: ${ADMIN}...\n`);
-
-      await dbInstance
-        .insertInto("capabilities")
-        .values({
-          id: sql`gen_random_uuid()`,
-          principal: principal,
-          resource_type: "data",
-          resource_namespace: "hotel-schema-v1", // Hotel schema namespace
-          resource_id: "*", // Wildcard - access to all hotel data entries
-          device_id: null,
-          actions: ["read", "write", "delete", "manage"], // Full CRUD access
-          conditions: null,
-          metadata: {
-            granted_by: "system",
-            reason: "admin_seeding",
-            created_at: new Date().toISOString(),
-          },
-          title: "Hotel Management Access",
-          description: "Full access to manage all hotel data entries",
-          created_at: new Date(),
-          updated_at: new Date(),
-        })
-        .execute();
-
-      console.log("✅ Admin hotel data wildcard capability granted successfully!\n");
-      console.log(`   Principal: ${principal}\n`);
-      console.log(`   Resource: data:hotel-schema-v1:*\n`);
-      console.log(`   Actions: read, write, delete, manage\n`);
+    // Naming convention:
+    // - Schema lookup: Uses name-scoped identifier (e.g., "@hominio/hotel-v1") for human-readable lookup
+    // - Capability grant: Uses nanoid schema ID for relationships (e.g., "wwQ237r5E0hGYXO-fu818")
+    // - This ensures capabilities reference schemas by their relational ID, not the human-readable name
+    let hotelSchemaId: string | null = null;
+    let adminUsername = "@hominio"; // Default fallback
+    
+    // Get admin username first (used for name-scoped schema lookup)
+    try {
+      const adminUser = await dbInstance
+        .selectFrom("user")
+        .select(["username"])
+        .where("id", "=", ADMIN)
+        .executeTakeFirst();
+      if (adminUser?.username) {
+        adminUsername = adminUser.username;
+        console.log(`📌 Using admin username for schema lookup: ${adminUsername}\n`);
+      }
+    } catch (error) {
+      console.log(`⚠️  Could not fetch admin username, using default: ${adminUsername}\n`);
+    }
+    
+    if (zeroDb) {
+      try {
+        // Query Zero database for hotel schema by name-scoped identifier
+        // Format: @username/schema-name-v1 (e.g., @hominio/hotel-v1)
+        const schemaName = `${adminUsername}/hotel-v1`;
+        console.log(`🔍 Looking up hotel schema by name: ${schemaName}\n`);
+        
+        const hotelSchemaResult = await sql`
+          SELECT id, name, "ownedBy" FROM schema 
+          WHERE name = ${schemaName}
+          LIMIT 1
+        `.execute(zeroDb);
+        
+        if (hotelSchemaResult.rows.length > 0) {
+          hotelSchemaId = hotelSchemaResult.rows[0].id as string;
+          const foundSchemaName = hotelSchemaResult.rows[0].name;
+          const foundOwnedBy = hotelSchemaResult.rows[0].ownedBy;
+          
+          console.log(`📌 Found hotel schema:\n`);
+          console.log(`   Name (metadata): ${foundSchemaName}\n`);
+          console.log(`   ID (nanoid): ${hotelSchemaId}\n`);
+          console.log(`   Owner: ${foundOwnedBy || '(not set)'}\n`);
+          
+          // Ensure ownedBy is set
+          if (!foundOwnedBy) {
+            console.log(`📝 Updating schema ownedBy to admin: ${ADMIN}...\n`);
+            await sql`
+              UPDATE schema 
+              SET "ownedBy" = ${ADMIN}
+              WHERE id = ${hotelSchemaId}
+            `.execute(zeroDb);
+            console.log(`✅ Updated schema ownedBy\n`);
+          }
+        } else {
+          console.log(`⚠️  Hotel schema not found in Zero database (looking for: ${schemaName}). Skipping hotel capability grant.\n`);
+          console.log(`   This is expected if Zero migration hasn't run yet. Run Zero migration first.\n`);
+        }
+      } catch (error: any) {
+        console.log(`⚠️  Could not query Zero database for hotel schema: ${error.message}\n`);
+        console.log(`   This is expected if ZERO_POSTGRES_SECRET is not set or Zero migration hasn't run.\n`);
+      }
     } else {
-      console.log(`ℹ️  Admin ${ADMIN} already has hotel data wildcard capability, skipping\n`);
+      console.log(`⚠️  ZERO_POSTGRES_SECRET not set. Cannot query for hotel schema ID.\n`);
+      console.log(`   Skipping hotel capability grant. Set ZERO_POSTGRES_SECRET to enable.\n`);
+    }
+    
+    // Only grant hotel capability if we found the schema ID
+    // Capability uses nanoid ID (not name-scoped identifier) for relationships
+    if (hotelSchemaId) {
+      const existingHotelCapability = await dbInstance
+        .selectFrom("capabilities")
+        .selectAll()
+        .where("principal", "=", principal)
+        .where("resource_type", "=", "data")
+        .where("resource_namespace", "=", hotelSchemaId) // Uses nanoid ID (not name-scoped identifier)
+        .where("resource_id", "=", "*")
+        .executeTakeFirst();
+
+      if (!existingHotelCapability) {
+        console.log(`📝 Granting hotel data wildcard capability to admin: ${ADMIN}...\n`);
+        console.log(`   Using schema ID (nanoid): ${hotelSchemaId}\n`);
+
+        await dbInstance
+          .insertInto("capabilities")
+          .values({
+            id: sql`gen_random_uuid()`,
+            principal: principal,
+            resource_type: "data",
+            resource_namespace: hotelSchemaId, // Uses nanoid ID for relationships (not name-scoped identifier)
+            resource_id: "*", // Wildcard - access to all hotel data entries
+            device_id: null,
+            actions: ["read", "write", "delete", "manage"], // Full CRUD access
+            conditions: null,
+            metadata: {
+              granted_by: "system",
+              reason: "admin_seeding",
+              created_at: new Date().toISOString(),
+            },
+            title: "Hotel Management Access",
+            description: "Full access to manage all hotel data entries",
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+          .execute();
+
+        console.log("✅ Admin hotel data wildcard capability granted successfully!\n");
+        console.log(`   Principal: ${principal}\n`);
+        console.log(`   Resource: data:${hotelSchemaId}:*\n`);
+        console.log(`   Schema name (metadata): @hominio/hotel-v1\n`);
+        console.log(`   Actions: read, write, delete, manage\n`);
+      } else {
+        console.log(`ℹ️  Admin ${ADMIN} already has hotel data wildcard capability, skipping\n`);
+      }
     }
   } catch (error: any) {
     console.error("❌ Error seeding admin capabilities:", error.message);
@@ -376,6 +542,7 @@ export async function seedAdminCapabilities(dbInstance: Kysely<any>) {
 // This allows running: bun run auth.migrate.ts
 if (import.meta.main) {
   migrateCapabilities(db)
+    .then(() => seedAdminUsername(db))
     .then(() => seedAdminCapabilities(db))
     .then(() => {
       console.log("✨ Capabilities migration completed!");

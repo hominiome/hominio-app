@@ -28,7 +28,8 @@ const project = table('project')
 // Schema table - stores JSON Schema definitions
 const schemaTable = table('schema')
   .columns({
-    id: string(), // Schema ID (e.g., 'hotel-schema-v1')
+    id: string(), // Schema ID (nanoid) - used for relational links
+    name: string(), // Human-readable, unique schema identifier (e.g., '@hominio/hotel-v1')
     ownedBy: string(), // Owner user ID (defaults to admin)
     data: json<any>(), // JSONB column - contains JSON Schema definition
   })

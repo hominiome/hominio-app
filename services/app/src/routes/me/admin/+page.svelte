@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { nanoid } from 'nanoid';
 	import { getZeroContext } from '$lib/zero-utils';
-	import { allDataBySchema } from '@hominio/zero';
+	import { allDataBySchema, allSchemas, getHotelSchemaIdFromSchemas } from '@hominio/zero';
 	import { GlassCard, GlassButton, LoadingSpinner, Alert } from '@hominio/brand';
 	import { createAuthClient } from '@hominio/auth';
 	import type { PageData } from './$types';
@@ -17,6 +18,8 @@
 	let loading = $state(true);
 	/** @type {string | null} */
 	let error = $state(null);
+	/** @type {string | null} */
+	let hotelSchemaId = $state<string | null>(null);
 
 	// Form state
 	let showForm = $state(false);
@@ -40,6 +43,7 @@
 		}
 
 		let hotelsView: any;
+		let schemasView: any;
 
 		(async () => {
 			// Wait for Zero to be ready
@@ -54,17 +58,58 @@
 				return;
 			}
 
-			try {
-				// Query all hotels using synced query
-				const hotelsQuery = allDataBySchema('hotel-schema-v1');
-				hotelsView = zero.materialize(hotelsQuery);
+		try {
+			// First, get all schemas to find the hotel schema ID
+			// Keep this reactive - don't destroy the view, let it update when data arrives
+			const schemasQuery = allSchemas();
+			schemasView = zero.materialize(schemasQuery);
+			
+			schemasView.addListener((schemasData: any) => {
+				const schemasArray = Array.from(schemasData || []);
+				
+				// Debug: log schemas to see what we're getting
+				console.log('[Admin] Found schemas:', schemasArray.length, schemasArray.map((s: any) => ({ id: s.id, name: s.name })));
+				
+				const foundHotelSchemaId = getHotelSchemaIdFromSchemas(schemasArray);
+				
+				if (!foundHotelSchemaId) {
+					// More helpful error message, but keep listener active for reactive updates
+					const schemaNames = schemasArray.map((s: any) => s.name).filter(Boolean);
+					if (schemasArray.length === 0) {
+						error = 'No schemas found. Waiting for sync...';
+						loading = true; // Keep loading while waiting
+					} else {
+						error = `Hotel schema not found. Available schemas: ${schemaNames.join(', ') || 'none'}. Please run migration to create @hominio/hotel-v1 schema.`;
+						loading = false;
+					}
+					// Don't destroy - keep listening for when schemas arrive
+					return;
+				}
+				
+				// Schema found! Set it and query hotels
+				if (hotelSchemaId !== foundHotelSchemaId) {
+					hotelSchemaId = foundHotelSchemaId;
+					console.log('[Admin] Found hotel schema ID:', foundHotelSchemaId);
+					
+					// Destroy old hotels view if it exists
+					if (hotelsView) {
+						hotelsView.destroy();
+					}
+					
+					// Now query hotels using the dynamic schema ID (reactive)
+					const hotelsQuery = allDataBySchema(foundHotelSchemaId);
+					hotelsView = zero.materialize(hotelsQuery);
 
-				hotelsView.addListener((data: any) => {
-					const newHotels = Array.from(data || []);
-					hotels = newHotels;
-					loading = false;
-					error = null;
-				});
+					hotelsView.addListener((data: any) => {
+						const newHotels = Array.from(data || []);
+						hotels = newHotels;
+						loading = false;
+						error = null;
+					});
+				}
+				
+				// Keep schemasView active - don't destroy, it will reactively update
+			});
 			} catch (err) {
 				console.error('Error setting up Zero query:', err);
 				error = err instanceof Error ? err.message : 'Fehler beim Laden der Hotels';
@@ -106,6 +151,11 @@
 				return;
 			}
 
+			if (!hotelSchemaId) {
+				error = 'Hotel schema ID not found. Please refresh the page.';
+				return;
+			}
+
 			const hotelData = {
 				name: formData.name.trim(),
 				address: formData.address.trim(),
@@ -114,14 +164,15 @@
 				...(formData.rating !== undefined && formData.rating > 0 ? { rating: formData.rating } : {}),
 			};
 
-			const hotelId = `hotel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+			// Generate unique ID using nanoid
+			const hotelId = nanoid();
 
 			// Create hotel using Zero mutator
 			// Zero's json() type accepts objects directly, no need to stringify
 			await zero.mutate.data.create({
 				id: hotelId,
 				ownedBy: $session.data.user.id,
-				schema: 'hotel-schema-v1',
+				schema: hotelSchemaId, // Use dynamic schema ID
 				data: hotelData, // Pass object directly - Zero's json() type handles it
 			});
 

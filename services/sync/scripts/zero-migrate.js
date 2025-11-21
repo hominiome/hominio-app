@@ -1,6 +1,7 @@
 import { Kysely, sql } from "kysely";
 import { NeonDialect } from "kysely-neon";
 import { neon } from "@neondatabase/serverless";
+import { nanoid } from "nanoid";
 
 // Bun automatically loads .env file
 // Support both new name (ZERO_POSTGRES_SECRET) and old name (SECRET_ZERO_DEV_PG) for backward compatibility
@@ -56,10 +57,13 @@ async function createTables() {
       .createTable("schema")
       .ifNotExists()
       .addColumn("id", "text", (col) => col.primaryKey())
+      .addColumn("name", "text", (col) => col.unique().notNull()) // Human-readable, unique schema ID (e.g., '@hominio/hotel-v1')
       .addColumn("ownedBy", "text", (col) => col.notNull())
       .addColumn("data", "jsonb", (col) => col.notNull()) // jsonb matches Zero's json() type
       .execute();
     console.log("✅ Schema table created\n");
+
+    // Name column is created with the table - no migration needed for clean slate
 
     // Data table - stores actual data validated against schemas
     // Using jsonb type - Zero's json() helper maps to jsonb in PostgreSQL
@@ -233,31 +237,7 @@ async function setupReplication() {
     console.log("✅ Replication setup complete\n");
 }
 
-/**
- * Migrate existing userId column to ownedBy (if table exists)
- */
-async function migrateUserIdToOwnedBy() {
-  console.log("🔄 Checking for userId column migration...\n");
-
-  try {
-    // Check if userId column exists
-    const columnCheck = await sql`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'project' AND column_name = 'userId'
-    `.execute(db);
-
-    if (columnCheck.rows.length > 0) {
-      console.log("📝 Migrating userId column to ownedBy...\n");
-      await sql`ALTER TABLE project RENAME COLUMN "userId" TO "ownedBy"`.execute(db);
-      console.log("✅ Column renamed successfully\n");
-    } else {
-      console.log("ℹ️  No userId column found, skipping migration\n");
-    }
-  } catch (error) {
-    console.log(`ℹ️  Column migration skipped: ${error.message}\n`);
-  }
-}
+// No migration needed - clean slate, tables created fresh
 
 /**
  * Seed admin data (only if ADMIN_USER_ID is set)
@@ -284,8 +264,8 @@ async function seedAdminData() {
     if (count === 0) {
       console.log(`📝 Projects table is empty, creating example project owned by admin: ${ADMIN}...\n`);
 
-      // Generate a unique ID for the example project
-      const exampleProjectId = `example-project-${Date.now()}`;
+      // Generate a unique ID for the example project using nanoid
+      const exampleProjectId = nanoid();
       const now = new Date().toISOString();
 
       // Insert example project owned by admin
@@ -323,29 +303,79 @@ async function seedAdminData() {
 
 /**
  * Seed hotel schema (owned by admin)
+ * Uses nanoid for ID, name-scoped identifier as metadata
  */
 async function seedHotelSchema() {
   const ADMIN = process.env.ADMIN;
   
   if (!ADMIN) {
     console.log("ℹ️  ADMIN not set, skipping hotel schema seeding\n");
-    return;
+    return null;
   }
 
   console.log("📝 Checking if hotel schema seeding is needed...\n");
 
   try {
-    // Check if hotel schema already exists
+    // Get admin username from wallet database (for name-scoped schema identifier)
+    // Format: @username/schema-name-v1 (e.g., @hominio/hotel-v1)
+    let adminUsername = "@hominio"; // Default fallback
+    try {
+      const walletDbUrl = process.env.WALLET_POSTGRES_SECRET;
+      if (walletDbUrl) {
+        const { Kysely } = await import("kysely");
+        const { NeonDialect } = await import("kysely-neon");
+        const { neon } = await import("@neondatabase/serverless");
+        const walletDb = new Kysely({
+          dialect: new NeonDialect({ neon: neon(walletDbUrl) }),
+        });
+        const adminUser = await walletDb
+          .selectFrom("user")
+          .select(["username"])
+          .where("id", "=", ADMIN)
+          .executeTakeFirst();
+        if (adminUser?.username) {
+          adminUsername = adminUser.username;
+          console.log(`📌 Found admin username: ${adminUsername}\n`);
+        } else {
+          console.log(`⚠️  Admin user not found or has no username, using default: ${adminUsername}\n`);
+        }
+      }
+    } catch (error) {
+      console.log(`⚠️  Could not fetch admin username, using default: ${adminUsername}\n`);
+    }
+
+    // Check if hotel schema already exists by name-scoped identifier
+    const schemaName = `${adminUsername}/hotel-v1`;
     const existingSchema = await sql`
-      SELECT id FROM schema WHERE id = 'hotel-schema-v1'
+      SELECT id, name, "ownedBy" FROM schema 
+      WHERE name = ${schemaName}
     `.execute(db);
 
     if (existingSchema.rows.length > 0) {
-      console.log("ℹ️  Hotel schema already exists, skipping seeding\n");
-      return;
+      const existingId = existingSchema.rows[0].id;
+      const existingOwnedBy = existingSchema.rows[0].ownedBy;
+      
+      // Ensure ownedBy is set (migration for existing schemas)
+      if (!existingOwnedBy) {
+        console.log(`📝 Updating existing schema to set ownedBy to admin: ${ADMIN}...\n`);
+        await sql`
+          UPDATE schema 
+          SET "ownedBy" = ${ADMIN}
+          WHERE id = ${existingId}
+        `.execute(db);
+        console.log(`✅ Updated schema ownedBy\n`);
+      }
+      
+      console.log(`ℹ️  Hotel schema already exists with name: ${schemaName}, ID: ${existingId}\n`);
+      return existingId;
     }
 
-    console.log(`📝 Creating hotel schema owned by admin: ${ADMIN}...\n`);
+    // Create new schema with nanoid ID
+    console.log(`📝 Creating hotel schema...\n`);
+    console.log(`   Schema name (metadata): ${schemaName}\n`);
+
+    // Generate unique ID using nanoid (used for relationships)
+    const hotelSchemaId = nanoid();
 
     // Read hotel schema JSON file
     const fs = await import('fs');
@@ -375,27 +405,38 @@ async function seedHotelSchema() {
       };
     }
 
-    // Insert hotel schema (data is stored as jsonb)
+    // Insert hotel schema with nanoid-generated ID and name-scoped identifier
     await sql`
-      INSERT INTO schema (id, "ownedBy", data)
-      VALUES ('hotel-schema-v1', ${ADMIN}, ${JSON.stringify(hotelSchemaJson)}::jsonb)
+      INSERT INTO schema (id, name, "ownedBy", data)
+      VALUES (${hotelSchemaId}, ${schemaName}, ${ADMIN}, ${JSON.stringify(hotelSchemaJson)}::jsonb)
     `.execute(db);
 
     console.log("✅ Hotel schema created successfully!\n");
-    console.log(`   Schema ID: hotel-schema-v1\n`);
+    console.log(`   Schema ID (nanoid): ${hotelSchemaId}\n`);
+    console.log(`   Schema name: ${schemaName}\n`);
     console.log(`   Owner: ${ADMIN}\n`);
+    return hotelSchemaId; // Return generated ID
   } catch (error) {
     console.error("❌ Error seeding hotel schema:", error.message);
     // Don't throw - this is optional, migration can continue
     console.log("⚠️  Continuing migration despite hotel schema seeding error...\n");
+    return null; // Return null on error
   }
 }
 
-// Run migration
+// Run migration (clean slate - no backward compatibility)
 createTables()
-  .then(() => migrateUserIdToOwnedBy())
   .then(() => seedAdminData())
-  .then(() => seedHotelSchema())
+  .then(async () => {
+    // Seed hotel schema and get its ID (nanoid)
+    const hotelSchemaId = await seedHotelSchema();
+    if (hotelSchemaId) {
+      console.log(`\n📌 Hotel schema created successfully!`);
+      console.log(`   Schema ID (nanoid): ${hotelSchemaId}`);
+      console.log(`   Schema name (metadata): @hominio/hotel-v1`);
+      console.log(`   Use the nanoid ID for relationships/references.\n`);
+    }
+  })
   .then(() => {
     console.log("✨ Migration completed successfully!");
     process.exit(0);

@@ -89,19 +89,54 @@ jobs:
           # Map ZERO_POSTGRES_SECRET to ZERO_UPSTREAM_DB (Zero expects ZERO_UPSTREAM_DB)
           # Using standardized naming convention (ZERO_POSTGRES_SECRET, etc.)
           # Production URLs point to api.hominio.me API service
-          flyctl secrets set \
-            ZERO_UPSTREAM_DB="${{ secrets.ZERO_POSTGRES_SECRET }}" \
-            ZERO_CHANGE_DB="${{ secrets.ZERO_POSTGRES_SECRET }}" \
-            ZERO_POSTGRES_SECRET="${{ secrets.ZERO_POSTGRES_SECRET }}" \
-            ZERO_AUTH_SECRET="${{ secrets.AUTH_SECRET }}" \
-            ZERO_ADMIN_AUTH="${{ secrets.AUTH_SECRET }}" \
-            ZERO_GET_QUERIES_URL="https://api.hominio.me/api/v0/zero/get-queries" \
-            ZERO_PUSH_URL="https://api.hominio.me/api/v0/zero/push" \
-            ZERO_GET_QUERIES_FORWARD_COOKIES="true" \
-            ZERO_MUTATE_FORWARD_COOKIES="true" \
-            ZERO_DB_CONNECT_TIMEOUT="10" \
-            NODE_ENV="production" \
-            --app hominio-sync
+          # Retry logic for machine lease issues (Fly.io sometimes has temporary lease conflicts)
+          MAX_RETRIES=5
+          RETRY_DELAY=15
+          RETRY_COUNT=0
+          SUCCESS=false
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$SUCCESS" != "true" ]; do
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            
+            echo "📝 Setting secrets (attempt $RETRY_COUNT/$MAX_RETRIES)..."
+            
+            # Capture both stdout and stderr
+            OUTPUT=$(flyctl secrets set \
+              ZERO_UPSTREAM_DB="${{ secrets.ZERO_POSTGRES_SECRET }}" \
+              ZERO_CHANGE_DB="${{ secrets.ZERO_POSTGRES_SECRET }}" \
+              ZERO_POSTGRES_SECRET="${{ secrets.ZERO_POSTGRES_SECRET }}" \
+              ZERO_AUTH_SECRET="${{ secrets.AUTH_SECRET }}" \
+              ZERO_ADMIN_AUTH="${{ secrets.AUTH_SECRET }}" \
+              ZERO_GET_QUERIES_URL="https://api.hominio.me/api/v0/zero/get-queries" \
+              ZERO_PUSH_URL="https://api.hominio.me/api/v0/zero/push" \
+              ZERO_GET_QUERIES_FORWARD_COOKIES="true" \
+              ZERO_MUTATE_FORWARD_COOKIES="true" \
+              ZERO_DB_CONNECT_TIMEOUT="10" \
+              NODE_ENV="production" \
+              --app hominio-sync 2>&1)
+            
+            EXIT_CODE=$?
+            echo "$OUTPUT"
+            
+            # Check for lease conflict in output
+            if echo "$OUTPUT" | grep -qi "lease currently held"; then
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "⚠️  Machine lease conflict detected. Waiting ${RETRY_DELAY}s before retry... (attempt $RETRY_COUNT/$MAX_RETRIES)"
+                sleep $RETRY_DELAY
+              else
+                echo "❌ Failed to set secrets after $MAX_RETRIES attempts due to lease conflicts"
+                echo "   This usually resolves itself - try running the workflow again in a few minutes"
+                exit 1
+              fi
+            elif [ $EXIT_CODE -eq 0 ]; then
+              SUCCESS=true
+              echo "✅ Secrets set successfully!"
+            else
+              # Other error - don't retry
+              echo "❌ Failed to set secrets (exit code: $EXIT_CODE)"
+              exit 1
+            fi
+          done
 
           # Explicitly unset deprecated flags if they exist (cleanup)
           echo "🧹 Cleaning up deprecated environment variables..."

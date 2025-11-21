@@ -51,6 +51,22 @@ export const schemaById = syncedQuery(
 );
 
 /**
+ * Get a schema by title (searches in data->>'title')
+ * Note: This requires server-side support - Zero doesn't support JSONB queries directly
+ * For now, use allSchemas and filter client-side, or use schemaById if you know the ID
+ */
+export const schemaByTitle = syncedQuery(
+  'schemaByTitle',
+  z.tuple([z.string()]), // title
+  (title) => {
+    // Note: Zero doesn't support JSONB queries directly
+    // This will need server-side filtering in get-queries.ts
+    // For now, return all schemas and filter client-side
+    return builder.schema;
+  }
+);
+
+/**
  * ========================================
  * DATA QUERIES
  * ========================================

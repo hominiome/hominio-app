@@ -198,8 +198,9 @@ export function createServerMutators(
                 tx: AnyTransaction,
                 args: {
                     id: string;
+                    name: string; // Name-scoped identifier (e.g., "@hominio/hotel-v1")
                     ownedBy: string;
-                    data: string;
+                    data: any;
                 }
             ) => {
                 // Check authentication
@@ -237,7 +238,8 @@ export function createServerMutators(
                 tx: AnyTransaction,
                 args: {
                     id: string;
-                    data?: string;
+                    name?: string; // Name-scoped identifier (optional on update)
+                    data?: any;
                     ownedBy?: string;
                 }
             ) => {

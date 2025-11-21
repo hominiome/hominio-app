@@ -171,6 +171,7 @@
 		}
 
 		let hotelsView: any;
+		let schemasView: any;
 
 		(async () => {
 			// Wait for Zero to be ready
@@ -185,18 +186,58 @@
 				return;
 			}
 
-			try {
-				// Query all hotels using synced query (data entries with hotel schema)
-				const { allDataBySchema } = await import('@hominio/zero');
-				const hotelsQuery = allDataBySchema('hotel-schema-v1');
+		try {
+			// First, get all schemas to find the hotel schema ID
+			// Keep this reactive - don't destroy the view, let it update when data arrives
+			const { allSchemas, allDataBySchema, getHotelSchemaIdFromSchemas } = await import('@hominio/zero');
+			const schemasQuery = allSchemas();
+			const schemasView = zero.materialize(schemasQuery);
+			
+			schemasView.addListener((schemasData: any) => {
+				const schemasArray = Array.from(schemasData || []);
+				
+				// Debug: log schemas to see what we're getting
+				console.log('[Charles] Found schemas:', schemasArray.length, schemasArray.map((s: any) => ({ id: s.id, name: s.name })));
+				
+				const foundHotelSchemaId = getHotelSchemaIdFromSchemas(schemasArray);
+				
+				if (!foundHotelSchemaId) {
+					// More helpful error message, but keep listener active for reactive updates
+					const schemaNames = schemasArray.map((s: any) => s.name).filter(Boolean);
+					if (schemasArray.length === 0) {
+						error = 'No schemas found. Waiting for sync...';
+						loading = true; // Keep loading while waiting
+					} else {
+						error = `Hotel schema not found. Available schemas: ${schemaNames.join(', ') || 'none'}. Please run migration to create @hominio/hotel-v1 schema.`;
+						loading = false;
+					}
+					// Don't destroy - keep listening for when schemas arrive
+					return;
+				}
+				
+				// Schema found! Query hotels reactively
+				console.log('[Charles] Found hotel schema ID:', foundHotelSchemaId);
+				
+				// Destroy old hotels view if it exists
+				if (hotelsView) {
+					hotelsView.destroy();
+				}
+				
+				// Now query hotels using the dynamic schema ID (reactive)
+				const hotelsQuery = allDataBySchema(foundHotelSchemaId);
 				hotelsView = zero.materialize(hotelsQuery);
 
 				hotelsView.addListener((data: any) => {
 					const newHotels = Array.from(data || []);
+					console.log('[Charles] Hotels data received:', newHotels.length, 'hotels');
+					console.log('[Charles] Hotels:', newHotels);
 					hotels = newHotels;
 					loading = false;
 					error = null;
 				});
+				
+				// Keep schemasView active - don't destroy, it will reactively update
+			});
 			} catch (err) {
 				console.error('Error setting up Zero query:', err);
 				error = err instanceof Error ? err.message : 'Fehler beim Laden der Hotels';
@@ -207,6 +248,7 @@
 		return () => {
 			window.removeEventListener('actionSkill', handleActionSkillEvent as EventListener);
 			if (hotelsView) hotelsView.destroy();
+			if (schemasView) schemasView.destroy();
 		};
 	});
 
