@@ -39,7 +39,7 @@
 			currency: 'EUR',
 			minimumFractionDigits: 2,
 			maximumFractionDigits: 2
-		}).format(price);
+		}).format(price).replace(/\s€/, '€');
 	}
 </script>
 
