@@ -43,44 +43,51 @@
 	}
 </script>
 
-<div class="space-y-4 sm:space-y-6">
-	<div class="flex items-center justify-between">
-		<h2 class="text-xl sm:text-2xl font-bold text-slate-900">Speisekarte</h2>
+<div class="space-y-6">
+	<div class="relative flex items-center justify-center">
+		<h2 class="text-xl sm:text-2xl font-bold text-slate-900 text-center">Speisekarte</h2>
 		{#if onClose}
 			<button
 				onclick={onClose}
-				class="text-slate-400 hover:text-slate-600 transition-colors"
+				class="absolute right-0 text-slate-400 hover:text-slate-600 transition-colors"
 				aria-label="Close"
 			>
-				<svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 				</svg>
 			</button>
 		{/if}
 	</div>
+	<!-- Divider below Speisekarte title -->
+	<div class="border-b border-slate-200/60 pb-6"></div>
 	
 	{#if category === 'all'}
 		<!-- Show all categories -->
 		{#each categories as cat}
 			{#if menu[cat.id] && menu[cat.id].length > 0}
-				<div class="mb-5 sm:mb-6">
-					<h3 class="mb-2 sm:mb-3 text-base sm:text-lg font-bold text-slate-800">
+				<div class="mb-8">
+					<h3 class="mb-3 text-lg sm:text-xl font-bold text-slate-800 flex items-center justify-center gap-2">
+						<svg width="20" height="20" class="sm:w-6 sm:h-6 text-[#2da6b4]" fill="currentColor" viewBox="0 0 24 24">
+							{@html cat.icon}
+						</svg>
 						{cat.name}
 					</h3>
-					<div class="grid grid-cols-1 gap-2 sm:gap-3">
+					<!-- Divider below category title -->
+					<div class="border-b border-slate-200/60 mb-4"></div>
+					<div class="grid grid-cols-1 gap-3 sm:gap-4">
 						{#each menu[cat.id] as item}
-							<div class="bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200/50 shadow-sm overflow-hidden flex items-stretch">
-								<div class="flex-1 p-2.5 sm:p-3 min-w-0 flex-shrink">
-									<h4 class="text-sm sm:text-base font-semibold text-slate-900 mb-0.5 sm:mb-1">{item.name}</h4>
-									<p class="text-xs sm:text-sm text-slate-600 leading-relaxed">{item.description}</p>
+							<GlassCard lifted={true} class="p-0 overflow-hidden flex items-stretch">
+								<div class="flex-1 p-3 sm:p-4 min-w-0 flex-shrink">
+									<h4 class="text-sm sm:text-base font-semibold text-slate-900 mb-1 sm:mb-2">{item.name}</h4>
+									<p class="text-xs sm:text-sm text-slate-600">{item.description}</p>
 								</div>
-								<div class="bg-[#2da6b4] text-white px-2 py-2 sm:px-4 sm:py-3 flex flex-col items-center justify-center flex-shrink-0 w-[70px] sm:w-[120px] min-w-[70px] sm:min-w-[120px]">
-									<div class="text-base sm:text-xl font-bold whitespace-nowrap text-center leading-tight">{formatPrice(item.price)}</div>
+								<div class="bg-[#2da6b4] text-white px-3 sm:px-6 py-3 sm:py-4 flex flex-col items-center justify-center flex-shrink-0" style="width: 100px; min-width: 100px;">
+									<div class="text-base sm:text-2xl font-bold whitespace-nowrap text-center">{formatPrice(item.price)}</div>
 									{#if item.type}
-										<div class="text-[9px] sm:text-[10px] uppercase tracking-wide mt-0.5 opacity-90 text-center leading-tight">{item.type}</div>
+										<div class="text-[10px] sm:text-xs uppercase tracking-wide mt-1 opacity-90 text-center">{item.type}</div>
 									{/if}
 								</div>
-							</div>
+							</GlassCard>
 						{/each}
 					</div>
 				</div>
@@ -90,28 +97,35 @@
 		<!-- Show single category -->
 		{#if menu[category] && menu[category].length > 0}
 			<div>
-				<h3 class="mb-2 sm:mb-3 text-base sm:text-lg font-bold text-slate-800">
+				<h3 class="mb-3 text-lg sm:text-xl font-bold text-slate-800 flex items-center justify-center gap-2">
+					{#if categories.find(c => c.id === category)}
+						<svg width="20" height="20" class="sm:w-6 sm:h-6 text-[#2da6b4]" fill="currentColor" viewBox="0 0 24 24">
+							{@html categories.find(c => c.id === category).icon}
+						</svg>
+					{/if}
 					{categories.find(c => c.id === category)?.name || category}
 				</h3>
-				<div class="grid grid-cols-1 gap-2 sm:gap-3">
+				<!-- Divider below category title -->
+				<div class="border-b border-slate-200/60 mb-4"></div>
+				<div class="grid grid-cols-1 gap-3 sm:gap-4">
 					{#each menu[category] as item}
-						<div class="bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200/50 shadow-sm overflow-hidden flex items-stretch">
-							<div class="flex-1 p-2.5 sm:p-3 min-w-0 flex-shrink">
-								<h4 class="text-sm sm:text-base font-semibold text-slate-900 mb-0.5 sm:mb-1">{item.name}</h4>
-								<p class="text-xs sm:text-sm text-slate-600 leading-relaxed">{item.description}</p>
+						<GlassCard lifted={true} class="p-0 overflow-hidden flex items-stretch">
+							<div class="flex-1 p-3 sm:p-4 min-w-0 flex-shrink">
+								<h4 class="text-sm sm:text-base font-semibold text-slate-900 mb-1 sm:mb-2">{item.name}</h4>
+								<p class="text-xs sm:text-sm text-slate-600">{item.description}</p>
 							</div>
-							<div class="bg-[#2da6b4] text-white px-2 py-2 sm:px-4 sm:py-3 flex flex-col items-center justify-center flex-shrink-0 w-[70px] sm:w-[120px] min-w-[70px] sm:min-w-[120px]">
-								<div class="text-base sm:text-xl font-bold whitespace-nowrap text-center leading-tight">{formatPrice(item.price)}</div>
+							<div class="bg-[#2da6b4] text-white px-3 sm:px-6 py-3 sm:py-4 flex flex-col items-center justify-center flex-shrink-0" style="width: 100px; min-width: 100px;">
+								<div class="text-base sm:text-2xl font-bold whitespace-nowrap text-center">{formatPrice(item.price)}</div>
 								{#if item.type}
-									<div class="text-[9px] sm:text-[10px] uppercase tracking-wide mt-0.5 opacity-90 text-center leading-tight">{item.type}</div>
+									<div class="text-[10px] sm:text-xs uppercase tracking-wide mt-1 opacity-90 text-center">{item.type}</div>
 								{/if}
 							</div>
-						</div>
+						</GlassCard>
 					{/each}
 				</div>
 			</div>
 		{:else}
-			<div class="text-center py-6 sm:py-8 text-sm sm:text-base text-slate-500">
+			<div class="text-center py-8 text-slate-500">
 				Keine Artikel in dieser Kategorie gefunden.
 			</div>
 		{/if}

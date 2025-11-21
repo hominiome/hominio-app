@@ -291,7 +291,7 @@
 		{#if showingSkillResult && skillResult && skillResultFunctionId}
 			<!-- Skill Result View (replaces agent UI) -->
 			<div class="pt-8">
-				<GlassCard class="p-6">
+				<GlassCard class="p-0 sm:p-6">
 					<UIRenderer 
 						functionId={skillResultFunctionId}
 						resultData={skillResult}
