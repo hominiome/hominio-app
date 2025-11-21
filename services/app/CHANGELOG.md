@@ -1,3 +1,16 @@
+## [0.12.2](https://github.com/hominiome/hominio/compare/v0.12.1...v0.12.2) (2025-11-21)
+
+
+### Bug Fixes
+
+* add missing --admin-password flag to sync service Dockerfile ([a9bdbfd](https://github.com/hominiome/hominio/commit/a9bdbfd8602a00ec279f3df4e53d9c05146f37f6))
+* add missing @hominio/agents dependency to API service ([38aeb92](https://github.com/hominiome/hominio/commit/38aeb92e7fe12b3dacc8040f98b31aaadff61195))
+
+
+### Reverts
+
+* Revert "fix: add missing --admin-password flag to sync service Dockerfile" ([ef0590f](https://github.com/hominiome/hominio/commit/ef0590f6b1f3125e2716980f4827fe5c1c00aba5))
+
 ## [0.12.1](https://github.com/hominiome/hominio/compare/v0.12.0...v0.12.1) (2025-11-21)
 
 
