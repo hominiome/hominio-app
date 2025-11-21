@@ -1,3 +1,10 @@
+## [0.12.11](https://github.com/hominiome/hominio/compare/v0.12.10...v0.12.11) (2025-11-21)
+
+
+### Bug Fixes
+
+* migrate capabilities to schema IDs and fix WebSocket voice API connection ([7cc57e2](https://github.com/hominiome/hominio/commit/7cc57e2c699fb19b48ed82b68bafb92372e198b8))
+
 ## [0.12.10](https://github.com/hominiome/hominio/compare/v0.12.9...v0.12.10) (2025-11-21)
 
 
