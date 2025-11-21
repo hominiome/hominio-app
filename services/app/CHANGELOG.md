@@ -1,3 +1,10 @@
+## [0.12.8](https://github.com/hominiome/hominio/compare/v0.12.7...v0.12.8) (2025-11-21)
+
+
+### Bug Fixes
+
+* add explicit port flag and admin-password fallback ([6365ff0](https://github.com/hominiome/hominio/commit/6365ff0cac3ef149124b9753cd530be63fd03ae9))
+
 ## [0.12.7](https://github.com/hominiome/hominio/compare/v0.12.6...v0.12.7) (2025-11-21)
 
 
