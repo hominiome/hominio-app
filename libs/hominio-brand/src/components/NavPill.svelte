@@ -860,14 +860,16 @@
 	}
 	
 	@media (max-width: 480px) {
-		.signin-btn span,
-		.cta-btn span {
+		.signin-btn span {
 			display: none;
 		}
 		
-		.signin-btn,
-		.cta-btn {
+		.signin-btn {
 			padding: 0.625rem;
+		}
+		
+		.cta-btn {
+			padding: 0.625rem 1.25rem;
 		}
 		
 		.cta-login-btn {
