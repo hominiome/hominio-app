@@ -1,3 +1,10 @@
+## [0.13.1](https://github.com/hominiome/hominio/compare/v0.13.0...v0.13.1) (2025-11-22)
+
+
+### Bug Fixes
+
+* show 'Go To App' label on mobile in NavPill CTA button ([3f587e6](https://github.com/hominiome/hominio/commit/3f587e6a87d2589a7682f4d8e635685494b4fdd8))
+
 # [0.13.0](https://github.com/hominiome/hominio/compare/v0.12.15...v0.13.0) (2025-11-21)
 
 
