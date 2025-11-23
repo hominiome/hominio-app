@@ -164,3 +164,4 @@ This document provides a comprehensive security audit of all API routes, ensurin
 1. ✅ Fixed: Added `requireAdmin()` to auto-assign endpoint
 2. ⚠️ Optional: Consider adding capability check to `/api/v0/projects` if projects contain sensitive data
 
+

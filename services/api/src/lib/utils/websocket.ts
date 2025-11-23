@@ -42,3 +42,4 @@ export function truncateCloseReason(reason: string): string {
     return truncated;
 }
 
+
