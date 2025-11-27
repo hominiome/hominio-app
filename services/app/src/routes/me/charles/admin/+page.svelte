@@ -2,20 +2,24 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { GlassCard, LoadingSpinner, Alert } from '@hominio/brand';
-	import { loadAgentConfig, getMenuContextString } from '@hominio/agents';
+	import { loadVibeConfig, getMenuContextString } from '@hominio/vibes';
+	// Legacy support
+	import { loadVibeConfig as loadAgentConfig } from '@hominio/vibes';
 
-	// Load agent config
-	let agentConfig = $state(null);
+	// Load vibe config
+	let vibeConfig = $state(null);
 	let loading = $state(true);
 	let error = $state(null);
+	// Legacy alias
+	let agentConfig = $derived(vibeConfig);
 
 	// Preview menu context string
 	let menuContextPreview = $state('');
 
 	onMount(async () => {
 		try {
-			const config = await loadAgentConfig('charles');
-			agentConfig = config;
+			const config = await loadVibeConfig('charles');
+			vibeConfig = config;
 
 			// Generate menu context preview if menu skill exists
 			const menuSkill = config.skills?.find((s: any) => s.id === 'show-menu');
@@ -31,8 +35,8 @@
 
 			loading = false;
 		} catch (err) {
-			console.error('[Charles Admin] Failed to load agent config:', err);
-			error = err instanceof Error ? err.message : 'Fehler beim Laden der Agent-Konfiguration';
+			console.error('[Charles Admin] Failed to load vibe config:', err);
+			error = err instanceof Error ? err.message : 'Fehler beim Laden der Vibe-Konfiguration';
 			loading = false;
 		}
 	});

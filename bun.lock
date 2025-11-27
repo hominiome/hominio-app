@@ -15,14 +15,6 @@
         "semantic-release": "^25.0.2",
       },
     },
-    "libs/hominio-agents": {
-      "name": "@hominio/agents",
-      "version": "0.14.0",
-      "peerDependencies": {
-        "@hominio/zero": "workspace:*",
-        "svelte": "^5.0.0",
-      },
-    },
     "libs/hominio-auth": {
       "name": "@hominio/auth",
       "version": "0.14.0",
@@ -55,6 +47,14 @@
         "kysely-neon": "^2.0.2",
       },
     },
+    "libs/hominio-vibes": {
+      "name": "@hominio/vibes",
+      "version": "0.14.0",
+      "peerDependencies": {
+        "@hominio/zero": "workspace:*",
+        "svelte": "^5.0.0",
+      },
+    },
     "libs/hominio-zero": {
       "name": "@hominio/zero",
       "version": "0.14.0",
@@ -71,8 +71,8 @@
       "dependencies": {
         "@elysiajs/cors": "^1.1.1",
         "@google/genai": "^1.30.0",
-        "@hominio/agents": "workspace:*",
         "@hominio/caps": "workspace:*",
+        "@hominio/vibes": "workspace:*",
         "@hominio/zero": "workspace:*",
         "@neondatabase/serverless": "^1.0.2",
         "@rocicorp/zero": "^0.24.0",
@@ -92,10 +92,10 @@
       "name": "app",
       "version": "0.14.0",
       "dependencies": {
-        "@hominio/agents": "workspace:*",
         "@hominio/auth": "workspace:*",
         "@hominio/brand": "workspace:*",
         "@hominio/caps": "workspace:*",
+        "@hominio/vibes": "workspace:*",
         "@hominio/zero": "workspace:*",
         "@rocicorp/zero": "^0.24.0",
         "nanoid": "^5.0.0",
@@ -461,13 +461,13 @@
 
     "@hexagon/base64": ["@hexagon/base64@1.1.28", "", {}, "sha512-lhqDEAvWixy3bZ+UOYbPwUbBkwBq5C1LAJ/xPC8Oi+lL54oyakv/npbA0aU2hgCsx/1NUd4IBvV03+aUBWxerw=="],
 
-    "@hominio/agents": ["@hominio/agents@workspace:libs/hominio-agents"],
-
     "@hominio/auth": ["@hominio/auth@workspace:libs/hominio-auth"],
 
     "@hominio/brand": ["@hominio/brand@workspace:libs/hominio-brand"],
 
     "@hominio/caps": ["@hominio/caps@workspace:libs/hominio-caps"],
+
+    "@hominio/vibes": ["@hominio/vibes@workspace:libs/hominio-vibes"],
 
     "@hominio/zero": ["@hominio/zero@workspace:libs/hominio-zero"],
 

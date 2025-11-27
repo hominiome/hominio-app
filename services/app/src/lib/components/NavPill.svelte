@@ -31,8 +31,8 @@
 	$effect(() => {
 		if (currentAgentId) {
 			// Dynamically load agent config to get avatar
-			import('@hominio/agents').then(({ loadAgentConfig }) => {
-				loadAgentConfig(currentAgentId).then((config) => {
+			import('@hominio/vibes').then(({ loadVibeConfig }) => {
+				loadVibeConfig(currentAgentId).then((config) => {
 					agentAvatar = config.avatar || null;
 				}).catch((err) => {
 					console.warn('[NavPill] Failed to load agent config for avatar:', err);
@@ -48,19 +48,18 @@
 	const voiceCall = createVoiceCallService({
 		onToolCall: async (toolName, args) => {
 			console.log('[NavPill] Tool call:', toolName, args);
-			if (toolName === 'switchAgent') {
-				const agentId = args.agentId;
-				if (agentId === 'dashboard') {
-					goto('/me');
-				} else {
-					goto(`/me/${agentId}`);
-				}
+			if (toolName === 'queryVibeContext') {
+				// Vibe context queries don't require UI navigation
+				// The context is injected into the conversation automatically
+				console.log('[NavPill] Vibe context queried:', args.vibeId);
 			} else if (toolName === 'actionSkill') {
 				// Handle actionSkill tool calls
 				// Dispatch custom event for Charles/Karl page to handle
 				
-				// Extract agentId and skillId, pass the rest as args (flat structure)
-				const { agentId, skillId, ...rawArgs } = args;
+				// Extract vibeId and skillId, pass the rest as args (flat structure)
+				// Support legacy agentId parameter
+				const { vibeId, skillId, agentId, ...rawArgs } = args;
+				const effectiveVibeId = vibeId || agentId;
 				
 				// Handle potential nested args from LLM (hallucination or habit)
 				// If rawArgs has a single property 'args' which is an object, use that instead
@@ -72,7 +71,8 @@
 				
 				const event = new CustomEvent('actionSkill', {
 					detail: {
-						agentId,
+						vibeId: effectiveVibeId,
+						agentId: effectiveVibeId, // Legacy support
 						skillId,
 						args: skillArgs
 					}
@@ -357,6 +357,9 @@
 		// Track if call was active
 		if (voiceCall.isCallActive || voiceCall.status === 'connected') {
 			wasCallActive = true;
+		} else {
+			// Reset flag when call ends (both isCallActive and status are inactive)
+			wasCallActive = false;
 		}
 	});
 

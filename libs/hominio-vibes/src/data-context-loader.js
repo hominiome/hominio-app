@@ -1,22 +1,22 @@
 /**
  * Data Context Loader
- * Loads JSON data context from agent config
+ * Loads JSON data context from vibe config
  * Provides background knowledge/instructions that get passed to LLM conversation context
  */
 
 /**
- * Load data context for an agent
- * Returns JSON data context directly from agent config (no queries executed)
+ * Load data context for a vibe
+ * Returns JSON data context directly from vibe config (no queries executed)
  * This context is passed as prompt/instructions/background knowledge to the LLM
  * 
  * IMPORTANT: Menu data (id: "menu") is EXCLUDED from general context.
  * Menu context is only injected when the show-menu tool is called.
  * 
- * @param {import('./types.ts').AgentConfig} agentConfig - Agent configuration
+ * @param {import('./types.ts').VibeConfig} vibeConfig - Vibe configuration
  * @returns {Promise<string>} - Formatted data context string to pass to LLM
  */
-export async function loadDataContext(agentConfig) {
-	if (!agentConfig.dataContext || agentConfig.dataContext.length === 0) {
+export async function loadDataContext(vibeConfig) {
+	if (!vibeConfig.dataContext || vibeConfig.dataContext.length === 0) {
 		return '';
 	}
 	
@@ -25,7 +25,7 @@ export async function loadDataContext(agentConfig) {
 	// EXCEPT menu and wellness data which are only injected during their respective tool calls
 	const contextParts = [];
 	
-	for (const contextItem of agentConfig.dataContext) {
+	for (const contextItem of vibeConfig.dataContext) {
 		// Skip menu and wellness data - they're only injected during their respective tool calls
 		if (contextItem.id === 'menu' || contextItem.id === 'wellness') {
 			continue;

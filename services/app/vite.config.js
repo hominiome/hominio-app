@@ -17,7 +17,7 @@ export default defineConfig({
         preserveSymlinks: false,
         alias: {
             // Ensure workspace packages resolve correctly
-            '@hominio/agents': resolve(__dirname, '../../libs/hominio-agents/src')
+            '@hominio/vibes': resolve(__dirname, '../../libs/hominio-vibes/src')
         }
     },
     server: {

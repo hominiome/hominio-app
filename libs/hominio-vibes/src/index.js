@@ -1,13 +1,16 @@
 /**
- * @hominio/agents - Universal Tool Call System
- * JSON-driven agent system with dynamic function loading and UI rendering
+ * @hominio/vibes - Universal Tool Call System
+ * JSON-driven vibe system with dynamic function loading and UI rendering
  */
 
-export { loadAgentConfig } from './agent-loader.js';
+export { loadVibeConfig } from './vibe-loader.js';
+// Legacy export for backwards compatibility during migration
+export { loadVibeConfig as loadAgentConfig } from './vibe-loader.js';
 export { loadFunction } from './function-loader.js';
 export { handleActionSkill } from './action-skill-handler.js';
 export { default as UIRenderer } from './ui-renderer.svelte';
 export { loadDataContext } from './data-context-loader.js';
+export { buildVibeContextString, getVibeTools } from './vibe-context-builder.js';
 
 // Export menu context generator for LLM context injection
 export { getMenuContextString } from '../lib/functions/show-menu.js';

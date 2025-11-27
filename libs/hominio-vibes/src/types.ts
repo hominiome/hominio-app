@@ -1,8 +1,8 @@
 /**
- * TypeScript types for agent system
+ * TypeScript types for vibe system
  */
 
-export interface AgentConfig {
+export interface VibeConfig {
 	id: string;
 	name: string;
 	role: string;
@@ -10,6 +10,9 @@ export interface AgentConfig {
 	dataContext?: DataContextItem[];
 	skills: Skill[];
 }
+
+// Legacy alias for backwards compatibility during migration
+export type AgentConfig = VibeConfig;
 
 export interface DataContextItem {
 	// ID for identifying specific data context items (e.g., "menu")
@@ -51,10 +54,12 @@ export interface FunctionHandler {
 
 export interface FunctionContext {
 	dataContext: string; // Formatted string context for LLM prompt
-	rawDataContext?: DataContextItem[]; // Raw data context from agent config (for extracting structured data)
+	rawDataContext?: DataContextItem[]; // Raw data context from vibe config (for extracting structured data)
 	skillDataContext?: DataContextItem[]; // Skill-specific data context (e.g., menu data for show-menu skill)
 	userId?: string;
-	agentId: string;
+	vibeId: string;
+	// Legacy alias for backwards compatibility during migration
+	agentId?: string;
 }
 
 export interface FunctionResult {

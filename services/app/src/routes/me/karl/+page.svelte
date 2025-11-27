@@ -2,15 +2,21 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { GlassCard, LoadingSpinner, Alert } from '@hominio/brand';
-	import { loadAgentConfig, handleActionSkill, UIRenderer } from '@hominio/agents';
+	import { loadVibeConfig, handleActionSkill, UIRenderer } from '@hominio/vibes';
+	// Legacy support
+	import { loadVibeConfig as loadAgentConfig } from '@hominio/vibes';
 	import { createAuthClient } from '@hominio/auth';
 
-	// Load agent config
-	let agentConfig = $state(null);
-	let agentLoading = $state(true);
-	let agentError = $state(null);
+	// Load vibe config
+	let vibeConfig = $state(null);
+	let vibeLoading = $state(true);
+	let vibeError = $state(null);
+	// Legacy aliases for backward compatibility
+	let agentConfig = $derived(vibeConfig);
+	let agentLoading = $derived(vibeLoading);
+	let agentError = $derived(vibeError);
 
-	// Agent info (fallback if config fails)
+	// Vibe info (fallback if config fails)
 	const agent = {
 		name: 'Karl',
 		role: 'Calendar Assistant',
@@ -62,19 +68,20 @@
 	const session = authClient.useSession();
 
 	// Handle actionSkill tool calls
-	async function executeSkill(agentId: string, skillId: string, args: any) {
+	async function executeSkill(vibeId: string, skillId: string, args: any) {
 		try {
 			const userId = $session.data?.user?.id;
 			const result = await handleActionSkill(
-				{ agentId, skillId, args },
+				{ vibeId, skillId, args },
 				{
-					userId
+					userId,
+					activeVibeIds: [vibeId] // Pass active vibe for validation
 				}
 			);
 
 			if (result.success) {
-				// Find function ID from agent config
-				const skill = agentConfig?.skills.find(s => s.id === skillId);
+				// Find function ID from vibe config
+				const skill = vibeConfig?.skills.find(s => s.id === skillId);
 				const functionId = skill?.functionId || skillId;
 				
 				skillResult = result.data;
@@ -101,41 +108,77 @@
 	}
 
 	onMount(() => {
-		// Load agent config
+		// Load vibe config
 		(async () => {
 			try {
-				const config = await loadAgentConfig('karl');
-				agentConfig = config;
-				agentLoading = false;
+				const config = await loadVibeConfig('karl');
+				vibeConfig = config;
+				vibeLoading = false;
 			} catch (err) {
-				console.error('[Karl] Failed to load agent config:', err);
-				agentError = err instanceof Error ? err.message : 'Fehler beim Laden der Agent-Konfiguration';
-				agentLoading = false;
+				console.error('[Karl] Failed to load vibe config:', err);
+				vibeError = err instanceof Error ? err.message : 'Fehler beim Laden der Vibe-Konfiguration';
+				vibeLoading = false;
 			}
 		})();
+
+		// Check for pending actionSkill from sessionStorage (in case event was missed during navigation)
+		const checkPendingActionSkill = async () => {
+			try {
+				const pendingStr = sessionStorage.getItem('pendingActionSkill');
+				if (pendingStr) {
+					const pending = JSON.parse(pendingStr);
+					sessionStorage.removeItem('pendingActionSkill'); // Clear after reading
+					
+					if (pending.vibeId === 'karl' || pending.agentId === 'karl') {
+						console.log('[Karl] Found pending actionSkill:', pending);
+						// Wait for vibe config to load
+						while (!vibeConfig && !vibeError) {
+							await new Promise((resolve) => setTimeout(resolve, 100));
+						}
+						if (!vibeError && vibeConfig) {
+							executeSkill(pending.vibeId || pending.agentId, pending.skillId, pending.args || {});
+						}
+					}
+				}
+			} catch (err) {
+				console.warn('[Karl] Failed to check pending actionSkill:', err);
+			}
+		};
 
 		// Listen for actionSkill events from NavPill
 		const handleActionSkillEvent = async (event: Event) => {
 			const customEvent = event as CustomEvent;
-			const { agentId, skillId, args } = customEvent.detail;
+			const { vibeId, agentId, skillId, args } = customEvent.detail;
+			// Support legacy agentId parameter
+			const effectiveVibeId = vibeId || agentId;
 			
-			if (agentId === 'karl') {
-				// Ensure agent config is loaded before executing
-				if (!agentConfig) {
+			if (effectiveVibeId === 'karl') {
+				// Clear any pending actionSkill since we got the event directly
+				try {
+					sessionStorage.removeItem('pendingActionSkill');
+				} catch (err) {
+					// Ignore
+				}
+				
+				// Ensure vibe config is loaded before executing
+				if (!vibeConfig) {
 					// Wait for config to load
-					while (!agentConfig && !agentError) {
+					while (!vibeConfig && !vibeError) {
 						await new Promise((resolve) => setTimeout(resolve, 100));
 					}
-					if (agentError) {
-						console.error('[Karl] Failed to load agent config:', agentError);
+					if (vibeError) {
+						console.error('[Karl] Failed to load vibe config:', vibeError);
 						return;
 					}
 				}
-				executeSkill(agentId, skillId, args);
+				executeSkill(effectiveVibeId, skillId, args);
 			}
 		};
 
 		window.addEventListener('actionSkill', handleActionSkillEvent);
+		
+		// Check for pending actionSkill after a short delay to ensure config is loaded
+		setTimeout(checkPendingActionSkill, 100);
 
 		return () => {
 			window.removeEventListener('actionSkill', handleActionSkillEvent as EventListener);
