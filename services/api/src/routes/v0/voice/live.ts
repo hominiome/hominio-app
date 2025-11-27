@@ -258,7 +258,7 @@ export const voiceLiveHandler = {
                                     const userText = userTextParts.map((p: any) => p.text).join('');
                                     console.log(`[voice/live] 📝 USER TRANSCRIPT (user ${authData.sub}):`, userText);
                                 }
-                                
+
                                 // Check for turnComplete to log final transcript
                                 if (message.clientContent.userTurn.turnComplete) {
                                     const finalParts = userParts.filter((p: any) => p.text);
@@ -268,23 +268,34 @@ export const voiceLiveHandler = {
                                     }
                                 }
                             }
-                            
+
                             // Also check for transcript events directly in message
                             if (message.transcript) {
                                 console.log(`[voice/live] 📝 TRANSCRIPT EVENT (user ${authData.sub}):`, JSON.stringify(message.transcript));
                             }
-                            
+
                             // Handle different message types from Google Live API
                             if (message.serverContent) {
-                                // Check for text content in modelTurn.parts (AI transcript)
                                 const parts = message.serverContent?.modelTurn?.parts || [];
+
+                                // 1. Handle Audio Parts (Send immediately)
+                                const audioParts = parts.filter((p: any) => p.inlineData?.data);
+                                audioParts.forEach((part: any) => {
+                                    ws.send(JSON.stringify({
+                                        type: "audio",
+                                        data: part.inlineData.data,
+                                        mimeType: part.inlineData.mimeType || "audio/pcm;rate=24000",
+                                    }));
+                                });
+
+                                // 2. Handle Text Parts (Log)
                                 const textParts = parts.filter((p: any) => p.text);
                                 if (textParts.length > 0) {
                                     const aiText = textParts.map((p: any) => p.text).join('');
                                     console.log(`[voice/live] 🤖 AI TRANSCRIPT (user ${authData.sub}):`, aiText);
                                 }
-                                
-                                // Check for turnComplete to log final AI transcript
+
+                                // Log Turn Complete if present
                                 if (message.serverContent.modelTurn?.turnComplete) {
                                     const finalParts = parts.filter((p: any) => p.text);
                                     if (finalParts.length > 0) {
@@ -292,159 +303,145 @@ export const voiceLiveHandler = {
                                         console.log(`[voice/live] 🤖 AI TURN COMPLETE (user ${authData.sub}):`, finalText);
                                     }
                                 }
-                                
-                                // Check for audio in ANY part of modelTurn.parts
-                                // IMPORTANT: Iterate through all parts, don't just check the first one
-                                const audioPart = parts.find((p: any) => p.inlineData?.data);
-                                
-                                if (audioPart) {
-                                    // Audio data chunk from Google
+
+                                // 3. Handle Function Calls
+                                const functionCallParts = parts.filter((p: any) => p.functionCall);
+                                for (const part of functionCallParts) {
+                                    const functionCall = part.functionCall;
+                                    console.log("[voice/live] Handling function call:", JSON.stringify(functionCall));
+
+                                    // Send tool call to frontend for client-side handling
                                     ws.send(JSON.stringify({
-                                        type: "audio",
-                                        data: audioPart.inlineData.data,
-                                        mimeType: audioPart.inlineData.mimeType || "audio/pcm;rate=24000",
+                                        type: "toolCall",
+                                        toolName: functionCall.name,
+                                        args: functionCall.args || {},
                                     }));
-                                } else {
-                                    // Check for functionCall inside serverContent (Multimodal Live API structure)
-                                    const functionCallPart = parts.find((p: any) => p.functionCall);
 
-                                    if (functionCallPart) {
-                                        // Handle function call from serverContent
-                                        const functionCall = functionCallPart.functionCall;
-                                        console.log("[voice/live] Handling function call:", JSON.stringify(functionCall));
+                                    let response: any = { error: "Unknown tool" };
+                                    if (functionCall.name === "get_name") {
+                                        response = { name: "hominio" };
+                                    } else if (functionCall.name === "queryVibeContext") {
+                                        // Handle vibe context query: load context and inject into conversation
+                                        const vibeId = functionCall.args?.vibeId || 'unknown';
+                                        console.log(`[voice/live] 🔄 Querying vibe context: "${vibeId}" (serverContent handler)`);
 
-                                        // Send tool call to frontend for client-side handling
-                                        ws.send(JSON.stringify({
-                                            type: "toolCall",
-                                            toolName: functionCall.name,
-                                            args: functionCall.args || {},
-                                        }));
+                                        try {
+                                            // Check if vibe is already active
+                                            if (!activeVibeIds.includes(vibeId)) {
+                                                activeVibeIds.push(vibeId);
+                                            }
 
-                                        let response: any = { error: "Unknown tool" };
-                                        if (functionCall.name === "get_name") {
-                                            response = { name: "hominio" };
-                                        } else if (functionCall.name === "queryVibeContext") {
-                                            // Handle vibe context query: load context and inject into conversation
-                                            const vibeId = functionCall.args?.vibeId || 'unknown';
-                                            console.log(`[voice/live] 🔄 Querying vibe context: "${vibeId}" (serverContent handler)`);
+                                            // Load vibe config if not already loaded
+                                            if (!vibeConfigs[vibeId]) {
+                                                vibeConfigs[vibeId] = await loadVibeConfig(vibeId);
+                                            }
 
-                                            try {
-                                                // Check if vibe is already active
-                                                if (!activeVibeIds.includes(vibeId)) {
-                                                    activeVibeIds.push(vibeId);
+                                            // Build vibe context string and await before responding
+                                            const { buildVibeContextString, getVibeTools } = await import('@hominio/vibes');
+                                            const vibeContext = await buildVibeContextString(vibeId);
+                                            const availableTools = await getVibeTools(vibeId);
+
+                                            // Inject vibe context into conversation BEFORE sending tool response
+                                            session.sendClientContent({
+                                                turns: vibeContext,
+                                                turnComplete: true,
+                                            });
+
+                                            console.log(`[voice/live] ✅ Loaded vibe context: ${vibeId}`);
+                                            console.log(`[voice/live] Available tools: ${availableTools.join(', ')}`);
+
+                                            response = {
+                                                success: true,
+                                                message: `Loaded ${vibeId} vibe context`,
+                                                vibeId: vibeId
+                                            };
+                                        } catch (err) {
+                                            console.error(`[voice/live] Failed to load vibe context:`, err);
+                                            response = { success: false, error: `Failed to load vibe context: ${vibeId}` };
+                                        }
+                                    } else if (functionCall.name === "actionSkill") {
+                                        // Handle actionSkill tool call
+                                        const { vibeId, skillId, args } = functionCall.args || {};
+                                        // Support legacy agentId parameter
+                                        const effectiveVibeId = vibeId || (functionCall.args as any)?.agentId;
+                                        console.log(`[voice/live] ✅ Handling actionSkill tool call: vibe="${effectiveVibeId}", skill="${skillId}", args:`, args);
+
+                                        // Provide dynamic context knowledge when menu tool is called
+                                        if (skillId === "show-menu") {
+                                            loadVibeConfig(effectiveVibeId).then(async (config: any) => {
+                                                const skill = config.skills?.find((s: any) => s.id === 'show-menu');
+                                                let menuContextItem = null;
+                                                if (skill?.dataContext) {
+                                                    const skillDataContext = Array.isArray(skill.dataContext) ? skill.dataContext : [skill.dataContext];
+                                                    menuContextItem = skillDataContext.find((item: any) => item.id === 'menu');
+                                                }
+                                                if (!menuContextItem) {
+                                                    menuContextItem = config.dataContext?.find((item: any) => item.id === 'menu');
                                                 }
 
-                                                // Load vibe config if not already loaded
-                                                if (!vibeConfigs[vibeId]) {
-                                                    vibeConfigs[vibeId] = await loadVibeConfig(vibeId);
-                                                }
-
-                                                // Build vibe context string
-                                                const { buildVibeContextString, getVibeTools } = await import('@hominio/vibes');
-                                                buildVibeContextString(vibeId).then(async (vibeContext: string) => {
-                                                    const availableTools = await getVibeTools(vibeId);
-
-                                                    // Inject vibe context into conversation
+                                                if (menuContextItem && menuContextItem.data) {
+                                                    const { getMenuContextString } = await import('@hominio/vibes');
+                                                    const menuContext = getMenuContextString(menuContextItem.data, menuContextItem);
                                                     session.sendClientContent({
-                                                        turns: vibeContext,
+                                                        turns: menuContext,
                                                         turnComplete: true,
                                                     });
-
-                                                    console.log(`[voice/live] ✅ Loaded vibe context: ${vibeId}`);
-                                                    console.log(`[voice/live] Available tools: ${availableTools.join(', ')}`);
-                                                }).catch((err: any) => {
-                                                    console.error(`[voice/live] Error building vibe context:`, err);
-                                                });
-
-                                                response = {
-                                                    success: true,
-                                                    message: `Loaded ${vibeId} vibe context`,
-                                                    vibeId: vibeId
-                                                };
-                                            } catch (err) {
-                                                console.error(`[voice/live] Failed to load vibe context:`, err);
-                                                response = { success: false, error: `Failed to load vibe context: ${vibeId}` };
-                                            }
-                                        } else if (functionCall.name === "actionSkill") {
-                                            // Handle actionSkill tool call
-                                            const { vibeId, skillId, args } = functionCall.args || {};
-                                            // Support legacy agentId parameter
-                                            const effectiveVibeId = vibeId || (functionCall.args as any)?.agentId;
-                                            console.log(`[voice/live] ✅ Handling actionSkill tool call: vibe="${effectiveVibeId}", skill="${skillId}", args:`, args);
-
-                                            // Provide dynamic context knowledge when menu tool is called
-                                            if (skillId === "show-menu") {
-                                                loadVibeConfig(effectiveVibeId).then(async config => {
-                                                    const skill = config.skills?.find((s: any) => s.id === 'show-menu');
-                                                    let menuContextItem = null;
-                                                    if (skill?.dataContext) {
-                                                        const skillDataContext = Array.isArray(skill.dataContext) ? skill.dataContext : [skill.dataContext];
-                                                        menuContextItem = skillDataContext.find((item: any) => item.id === 'menu');
-                                                    }
-                                                    if (!menuContextItem) {
-                                                        menuContextItem = config.dataContext?.find((item: any) => item.id === 'menu');
-                                                    }
-
-                                                    if (menuContextItem && menuContextItem.data) {
-                                                        const { getMenuContextString } = await import('@hominio/vibes');
-                                                        const menuContext = getMenuContextString(menuContextItem.data, menuContextItem);
-                                                        session.sendClientContent({
-                                                            turns: menuContext,
-                                                            turnComplete: true,
-                                                        });
-                                                        console.log(`[voice/live] ✅ Injected menu context for show-menu tool call (from skill dataContext)`);
-                                                    }
-                                                }).catch(err => {
-                                                    console.error(`[voice/live] Error loading menu context:`, err);
-                                                });
-                                            }
-
-                                            if (skillId === "show-wellness") {
-                                                loadVibeConfig(effectiveVibeId).then(async config => {
-                                                    const skill = config.skills?.find((s: any) => s.id === 'show-wellness');
-                                                    let wellnessContextItem = null;
-                                                    if (skill?.dataContext) {
-                                                        const skillDataContext = Array.isArray(skill.dataContext) ? skill.dataContext : [skill.dataContext];
-                                                        wellnessContextItem = skillDataContext.find((item: any) => item.id === 'wellness');
-                                                    }
-                                                    if (!wellnessContextItem) {
-                                                        wellnessContextItem = config.dataContext?.find((item: any) => item.id === 'wellness');
-                                                    }
-
-                                                    if (wellnessContextItem && wellnessContextItem.data) {
-                                                        const { getWellnessContextString } = await import('@hominio/vibes');
-                                                        const wellnessContext = getWellnessContextString(wellnessContextItem.data, wellnessContextItem);
-                                                        session.sendClientContent({
-                                                            turns: wellnessContext,
-                                                            turnComplete: true,
-                                                        });
-                                                        console.log(`[voice/live] ✅ Injected wellness context for show-wellness tool call (from skill dataContext)`);
-                                                    }
-                                                }).catch(err => {
-                                                    console.error(`[voice/live] Error loading wellness context:`, err);
-                                                });
-                                            }
-                                            response = { success: true, message: `Executing skill ${skillId} for vibe ${effectiveVibeId}`, vibeId: effectiveVibeId, skillId };
+                                                    console.log(`[voice/live] ✅ Injected menu context for show-menu tool call (from skill dataContext)`);
+                                                }
+                                            }).catch((err: any) => {
+                                                console.error(`[voice/live] Error loading menu context:`, err);
+                                            });
                                         }
 
-                                        console.log("[voice/live] Sending tool response:", JSON.stringify(response));
-
-                                        session.sendToolResponse({
-                                            functionResponses: [
-                                                {
-                                                    id: functionCall.id,
-                                                    name: functionCall.name,
-                                                    response: { result: response }
+                                        if (skillId === "show-wellness") {
+                                            loadVibeConfig(effectiveVibeId).then(async (config: any) => {
+                                                const skill = config.skills?.find((s: any) => s.id === 'show-wellness');
+                                                let wellnessContextItem = null;
+                                                if (skill?.dataContext) {
+                                                    const skillDataContext = Array.isArray(skill.dataContext) ? skill.dataContext : [skill.dataContext];
+                                                    wellnessContextItem = skillDataContext.find((item: any) => item.id === 'wellness');
                                                 }
-                                            ]
-                                        });
-                                    } else {
-                                        // Other server content (turn complete, etc.)
-                                        ws.send(JSON.stringify({
-                                            type: "serverContent",
-                                            data: message.serverContent,
-                                        }));
+                                                if (!wellnessContextItem) {
+                                                    wellnessContextItem = config.dataContext?.find((item: any) => item.id === 'wellness');
+                                                }
+
+                                                if (wellnessContextItem && wellnessContextItem.data) {
+                                                    const { getWellnessContextString } = await import('@hominio/vibes');
+                                                    const wellnessContext = getWellnessContextString(wellnessContextItem.data, wellnessContextItem);
+                                                    session.sendClientContent({
+                                                        turns: wellnessContext,
+                                                        turnComplete: true,
+                                                    });
+                                                    console.log(`[voice/live] ✅ Injected wellness context for show-wellness tool call (from skill dataContext)`);
+                                                }
+                                            }).catch((err: any) => {
+                                                console.error(`[voice/live] Error loading wellness context:`, err);
+                                            });
+                                        }
+                                        response = { success: true, message: `Executing skill ${skillId} for vibe ${effectiveVibeId}`, vibeId: effectiveVibeId, skillId };
                                     }
+
+                                    console.log("[voice/live] Sending tool response:", JSON.stringify(response));
+
+                                    session.sendToolResponse({
+                                        functionResponses: [
+                                            {
+                                                id: functionCall.id,
+                                                name: functionCall.name,
+                                                response: { result: response }
+                                            }
+                                        ]
+                                    });
+                                }
+
+                                // 4. Handle Turn Complete / Other Content
+                                if (message.serverContent.turnComplete) {
+                                    console.log(`[voice/live] 🏁 TURN COMPLETE (user ${authData.sub})`);
+                                    // Forward server content to client (e.g. for UI state)
+                                    ws.send(JSON.stringify({
+                                        type: "serverContent",
+                                        data: message.serverContent,
+                                    }));
                                 }
                             } else if (message.data) {
                                 // Direct audio data chunk (fallback)
@@ -525,11 +522,13 @@ export const voiceLiveHandler = {
                                             }
                                         }
 
-                                        // Build vibe context string (async, don't await)
-                                        buildVibeContextString(vibeId).then(async (vibeContext: string) => {
+                                        // Build vibe context string and await before responding
+                                        try {
+                                            const { buildVibeContextString, getVibeTools } = await import('@hominio/vibes');
+                                            const vibeContext = await buildVibeContextString(vibeId);
                                             const availableTools = await getVibeTools(vibeId);
 
-                                            // Inject vibe context into conversation
+                                            // Inject vibe context into conversation BEFORE sending tool response
                                             session.sendClientContent({
                                                 turns: vibeContext,
                                                 turnComplete: true,
@@ -537,15 +536,20 @@ export const voiceLiveHandler = {
 
                                             console.log(`[voice/live] ✅ Loaded vibe context: ${vibeId}`);
                                             console.log(`[voice/live] Available tools: ${availableTools.join(', ')}`);
-                                        }).catch((err: any) => {
-                                            console.error(`[voice/live] Error building vibe context:`, err);
-                                        });
 
-                                        return {
-                                            name: "queryVibeContext",
-                                            response: { result: { success: true, message: `Loaded ${vibeId} vibe context`, vibeId: vibeId } },
-                                            id: fc.id
-                                        };
+                                            return {
+                                                name: "queryVibeContext",
+                                                response: { result: { success: true, message: `Loaded ${vibeId} vibe context`, vibeId: vibeId } },
+                                                id: fc.id
+                                            };
+                                        } catch (err) {
+                                            console.error(`[voice/live] Error building vibe context:`, err);
+                                            return {
+                                                name: "queryVibeContext",
+                                                response: { result: { success: false, error: `Failed to build vibe context: ${vibeId}` } },
+                                                id: fc.id
+                                            };
+                                        }
                                     }
 
                                     if (toolName === "actionSkill") {

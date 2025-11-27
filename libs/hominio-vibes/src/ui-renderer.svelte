@@ -38,7 +38,7 @@
 </script>
 
 {#if loading}
-	<div class="flex items-center justify-center p-8">
+	<div class="flex justify-center items-center p-8">
 		<div class="text-sm text-slate-500">Loading...</div>
 	</div>
 {:else if error}
@@ -46,6 +46,6 @@
 		<div class="text-sm text-red-600">Error: {error}</div>
 	</div>
 {:else if Component}
-	<Component data={resultData} onClose={onClose} />
+	<svelte:component this={Component} data={resultData} onClose={onClose} />
 {/if}
 
