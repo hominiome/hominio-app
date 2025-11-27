@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { UIRenderer } from '@hominio/vibes';
+	import { onMount } from 'svelte';
+	import { UIRenderer, loadVibeConfig } from '@hominio/vibes';
 	import { GlassCard, LoadingSpinner } from '@hominio/brand';
 	import { slide } from 'svelte/transition';
 
@@ -18,9 +19,33 @@
     // State for collapsing
     let expanded = $state(isExpanded);
     
+    // Profile image state
+    let avatarUrl = $state<string | null>(null);
+    let avatarLoading = $state(true);
+    
     $effect(() => {
         expanded = isExpanded;
     });
+
+	// Load vibe avatar
+	$effect(() => {
+		if (vibeId && isSkill) {
+			avatarLoading = true;
+			loadVibeConfig(vibeId)
+				.then(config => {
+					avatarUrl = config.avatar || null;
+					avatarLoading = false;
+				})
+				.catch(err => {
+					console.warn('[ActivityStreamItem] Failed to load vibe config:', err);
+					avatarUrl = null;
+					avatarLoading = false;
+				});
+		} else {
+			avatarUrl = null;
+			avatarLoading = false;
+		}
+	});
 
     function handleToggle() {
         if (onToggle) {
@@ -40,9 +65,17 @@
                 onclick={handleToggle}
             >
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>
-                    </div>
+                    {#if avatarUrl && !avatarLoading}
+                        <img 
+                            src={avatarUrl} 
+                            alt="{vibeId} avatar"
+                            class="w-8 h-8 rounded-full object-cover shadow-sm"
+                        />
+                    {:else}
+                        <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>
+                        </div>
+                    {/if}
                     <div>
                         <div class="font-semibold text-slate-800 text-sm uppercase tracking-wide">{skillId}</div>
                         <div class="text-xs text-slate-500 capitalize">{vibeId} Vibe</div>
@@ -60,7 +93,7 @@
 
             <!-- Expanded Content -->
             {#if expanded}
-                <div transition:slide={{ duration: 300 }} class="p-0 bg-slate-50/30">
+                <div transition:slide={{ duration: 300 }} class="p-0 md:p-6 lg:p-8 bg-slate-50/30">
                     {#if item.status === 'pending'}
                         <div class="p-8 flex justify-center items-center">
                             <LoadingSpinner />

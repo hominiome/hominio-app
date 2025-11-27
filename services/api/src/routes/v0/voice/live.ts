@@ -278,24 +278,29 @@ export const voiceLiveHandler = {
                             if (message.serverContent) {
                                 const parts = message.serverContent?.modelTurn?.parts || [];
 
-                                // 1. Handle Audio Parts (Send immediately)
-                                const audioParts = parts.filter((p: any) => p.inlineData?.data);
-                                audioParts.forEach((part: any) => {
-                                    ws.send(JSON.stringify({
-                                        type: "audio",
-                                        data: part.inlineData.data,
-                                        mimeType: part.inlineData.mimeType || "audio/pcm;rate=24000",
-                                    }));
-                                });
+                                // CRITICAL: Process ALL parts in order - audio FIRST, then everything else
+                                // This ensures audio is NEVER dropped, even when mixed with function calls or text
+                                
+                                // Step 1: Send ALL audio parts immediately (highest priority)
+                                for (const part of parts) {
+                                    if (part.inlineData?.data) {
+                                        // Audio data - send immediately, don't wait for anything
+                                        ws.send(JSON.stringify({
+                                            type: "audio",
+                                            data: part.inlineData.data,
+                                            mimeType: part.inlineData.mimeType || "audio/pcm;rate=24000",
+                                        }));
+                                    }
+                                }
 
-                                // 2. Handle Text Parts (Log)
+                                // Step 2: Log text parts (non-blocking)
                                 const textParts = parts.filter((p: any) => p.text);
                                 if (textParts.length > 0) {
                                     const aiText = textParts.map((p: any) => p.text).join('');
                                     console.log(`[voice/live] 🤖 AI TRANSCRIPT (user ${authData.sub}):`, aiText);
                                 }
 
-                                // Log Turn Complete if present
+                                // Step 3: Log Turn Complete if present
                                 if (message.serverContent.modelTurn?.turnComplete) {
                                     const finalParts = parts.filter((p: any) => p.text);
                                     if (finalParts.length > 0) {
@@ -304,9 +309,10 @@ export const voiceLiveHandler = {
                                     }
                                 }
 
-                                // 3. Handle Function Calls
-                                const functionCallParts = parts.filter((p: any) => p.functionCall);
-                                for (const part of functionCallParts) {
+                                // Step 4: Handle Function Calls (after audio is already sent)
+                                for (const part of parts) {
+                                    if (!part.functionCall) continue;
+                                    
                                     const functionCall = part.functionCall;
                                     console.log("[voice/live] Handling function call:", JSON.stringify(functionCall));
 

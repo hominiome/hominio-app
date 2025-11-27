@@ -13,6 +13,12 @@ import * as editCalendarEntryModule from '../lib/functions/edit-calendar-entry.j
 import * as deleteCalendarEntryModule from '../lib/functions/delete-calendar-entry.js';
 import * as viewCalendarModule from '../lib/functions/view-calendar.js';
 
+// Import UI components from brand package
+import MenuView from '@hominio/brand/vibes/MenuView.svelte';
+import WellnessView from '@hominio/brand/vibes/WellnessView.svelte';
+import CalendarView from '@hominio/brand/vibes/CalendarView.svelte';
+import CalendarEntryView from '@hominio/brand/vibes/CalendarEntryView.svelte';
+
 const functionModules = {
 	'show-menu': showMenuModule,
 	'show-wellness': showWellnessModule,
@@ -46,9 +52,21 @@ export async function loadFunction(functionId) {
 			throw new Error(`Function ${functionId} missing schema export`);
 		}
 		
+		// For show-menu, show-wellness, and calendar functions, use components from brand package
+		let uiComponentLoader = module.uiComponent;
+		if (functionId === 'show-menu') {
+			uiComponentLoader = () => Promise.resolve({ default: MenuView });
+		} else if (functionId === 'show-wellness') {
+			uiComponentLoader = () => Promise.resolve({ default: WellnessView });
+		} else if (functionId === 'view-calendar' || functionId === 'delete-calendar-entry') {
+			uiComponentLoader = () => Promise.resolve({ default: CalendarView });
+		} else if (functionId === 'create-calendar-entry' || functionId === 'edit-calendar-entry') {
+			uiComponentLoader = () => Promise.resolve({ default: CalendarEntryView });
+		}
+		
 		return {
 			handler: module.handler,
-			uiComponent: module.uiComponent,
+			uiComponent: uiComponentLoader,
 			schema: module.schema
 		};
 	} catch (error) {

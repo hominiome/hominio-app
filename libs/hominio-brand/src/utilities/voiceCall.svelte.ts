@@ -222,6 +222,10 @@ export function createVoiceCallService(options?: {
 				try {
 					const message = JSON.parse(event.data);
 
+					// CRITICAL: Process ALL message types, but audio ALWAYS gets played
+					// Even if other message types (toolCall, serverContent) are received,
+					// we must ensure ALL audio chunks are played in order
+					
 					switch (message.type) {
 						case 'status':
 							if (message.status === 'connected') {
@@ -238,12 +242,21 @@ export function createVoiceCallService(options?: {
 							break;
 
 						case 'audio':
+							// CRITICAL: ALWAYS play audio, regardless of other message types
+							// Audio chunks are queued sequentially using nextStartTime
+							// This ensures ALL audio is played, even when mixed with tool calls or other messages
 							aiState = 'speaking';
 							playAudio(message.data, 24000);
 							break;
 
 						case 'toolCall':
-							aiState = 'thinking';
+							// Tool calls don't interrupt audio playback
+							// Audio continues playing while tool calls are processed
+							// Only update AI state if no audio is currently playing
+							if (playingSources.size === 0) {
+								aiState = 'thinking';
+							}
+							
 							// Handle tool call on client side
 							// Support multiple formats:
 							// 1. Direct format: {type: 'toolCall', toolName: '...', args: {...}}
@@ -285,10 +298,15 @@ export function createVoiceCallService(options?: {
 						case 'error':
 							console.error('[VoiceCall] Server error:', message.message);
 							error = message.message;
-							aiState = 'idle';
+							// Only change AI state if no audio is playing
+							if (playingSources.size === 0) {
+								aiState = 'idle';
+							}
 							break;
 
 						case 'serverContent':
+							// Only handle interruption - this stops audio
+							// Other serverContent messages don't affect audio playback
 							if (message.data?.interrupted) {
 								playingSources.forEach(s => {
 									try { s.stop(); } catch (e) {}
@@ -297,6 +315,8 @@ export function createVoiceCallService(options?: {
 								nextStartTime = 0;
 								aiState = 'listening';
 							}
+							// Note: turnComplete and other serverContent messages don't stop audio
+							// Audio continues playing until all chunks are finished
 							break;
 					}
 				} catch (err) {

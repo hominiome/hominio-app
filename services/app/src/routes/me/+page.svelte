@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { GlassCard, LoadingSpinner } from '@hominio/brand';
 	import { createAuthClient } from '@hominio/auth';
-	import { handleActionSkill, loadVibeConfig } from '@hominio/vibes';
+	import { handleActionSkill, loadVibeConfig, listVibes } from '@hominio/vibes';
 	import { nanoid } from 'nanoid';
 	import ActivityStreamItem from '$lib/components/ActivityStreamItem.svelte';
 
@@ -24,16 +24,100 @@
 
 	let activities = $state<ActivityItem[]>([]);
 	let streamContainer: HTMLElement;
+	let activityItems: Map<string, HTMLElement> = new Map();
+	
+	// Available vibes for empty state
+	let availableVibes = $state<Array<{id: string, name: string, role: string, description: string, avatar: string, skills: any[]}>>([]);
+	let vibesLoading = $state(true);
 
-	// Auto-scroll to bottom when activities change
+	// Track items being pushed out of view
+	let itemsPushingOut = $state<Set<string>>(new Set());
+
+	// Store element references by item ID
+	let elementRefs: Record<string, HTMLElement> = $state({});
+
+	// Sync elementRefs to activityItems Map
 	$effect(() => {
-		if (activities.length && streamContainer) {
-			// Wait for DOM update
-			tick().then(() => {
-				window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-			});
+		// Update activityItems whenever elementRefs changes
+		for (const [id, el] of Object.entries(elementRefs)) {
+			if (el) {
+				activityItems.set(id, el);
+			}
+		}
+		// Remove items that are no longer in elementRefs
+		for (const id of activityItems.keys()) {
+			if (!elementRefs[id]) {
+				activityItems.delete(id);
+			}
 		}
 	});
+
+	// Smart scrolling when new activity is added
+	async function scrollToNewActivity(newItemId: string) {
+		await tick(); // Wait for DOM update
+		await tick(); // Extra tick for collapse animation
+		
+		if (!streamContainer) return;
+		
+		const newItemEl = activityItems.get(newItemId);
+		if (!newItemEl) return;
+		
+		if (activities.length < 2) {
+			// First item - just scroll to it
+			const newRect = newItemEl.getBoundingClientRect();
+			const targetScroll = newRect.top + window.scrollY - 100; // 100px from top
+			window.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
+			return;
+		}
+		
+		const previousItemId = activities[activities.length - 2]?.id;
+		const previousItemEl = previousItemId ? activityItems.get(previousItemId) : null;
+		const secondLastItemId = activities.length >= 3 ? activities[activities.length - 3]?.id : null;
+		const secondLastItemEl = secondLastItemId ? activityItems.get(secondLastItemId) : null;
+		
+		if (!previousItemEl) return;
+		
+		// Step 1: Mark 2nd-to-last item as pushing out and scroll it above viewport
+		if (secondLastItemId && secondLastItemEl) {
+			itemsPushingOut.add(secondLastItemId);
+			const secondLastRect = secondLastItemEl.getBoundingClientRect();
+			const scrollOffset = secondLastRect.top + window.scrollY - window.innerHeight - 50; // Push completely above viewport
+			window.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' });
+			
+			// Remove from pushing out set after animation
+			setTimeout(() => {
+				itemsPushingOut.delete(secondLastItemId);
+			}, 600);
+		}
+		
+		// Step 2: Wait for collapse animation (previous item is already collapsed)
+		await new Promise(resolve => setTimeout(resolve, 300));
+		
+		// Step 3: Scroll previous (collapsed) item to top edge of viewport
+		const previousRect = previousItemEl.getBoundingClientRect();
+		const currentScroll = window.scrollY;
+		const previousTop = previousRect.top + currentScroll;
+		const targetScroll = previousTop - 100; // 100px padding from top
+		
+		await new Promise(resolve => {
+			window.scrollTo({ 
+				top: Math.max(0, targetScroll), 
+				behavior: 'smooth' 
+			});
+			setTimeout(resolve, 400);
+		});
+		
+		// Step 4: Ensure new item is directly below collapsed previous item, starting at top
+		await tick();
+		const newRect = newItemEl.getBoundingClientRect();
+		const newItemTop = newRect.top + window.scrollY;
+		const finalScroll = newItemTop - 100; // 100px padding from top
+		
+		window.scrollTo({ 
+			top: Math.max(0, finalScroll), 
+			behavior: 'smooth' 
+		});
+	}
 
 	async function handleToolCall(toolName: string, args: any) {
 		const id = nanoid();
@@ -57,6 +141,9 @@
 
 		// Add new item to bottom
 		activities = [...activities, newItem];
+
+		// Scroll to position new activity properly
+		await scrollToNewActivity(id);
 
 		// Process the tool call
 		if (toolName === 'actionSkill') {
@@ -120,7 +207,57 @@
 		}
 	}
 
+	// Load available vibes for empty state
+	async function loadAvailableVibes() {
+		try {
+			const vibeIds = await listVibes();
+			const vibes = await Promise.all(
+				vibeIds.map(async (id) => {
+					try {
+						const config = await loadVibeConfig(id);
+						// Create short description from skills
+						let shortDesc = config.role;
+						if (config.skills && config.skills.length > 0) {
+							// Map skill IDs to short German descriptions
+							const skillNames: Record<string, string> = {
+								'show-menu': 'Menü',
+								'show-wellness': 'Wellness',
+								'view-calendar': 'Kalender anzeigen',
+								'create-calendar-entry': 'Termine erstellen',
+								'edit-calendar-entry': 'Termine bearbeiten',
+								'delete-calendar-entry': 'Termine löschen'
+							};
+							const descs = config.skills.map(s => skillNames[s.id] || s.name).filter(Boolean);
+							if (descs.length > 0) {
+								shortDesc = descs.join(', ');
+							}
+						}
+						return {
+							id: config.id,
+							name: config.name,
+							role: config.role,
+							description: shortDesc,
+							avatar: config.avatar || '',
+							skills: config.skills || []
+						};
+					} catch (err) {
+						console.warn(`[Me] Failed to load vibe config for ${id}:`, err);
+						return null;
+					}
+				})
+			);
+			availableVibes = vibes.filter(v => v !== null) as Array<{id: string, name: string, role: string, description: string, avatar: string, skills: any[]}>;
+			vibesLoading = false;
+		} catch (err) {
+			console.error('[Me] Failed to load available vibes:', err);
+			vibesLoading = false;
+		}
+	}
+
 	onMount(() => {
+		// Load available vibes
+		loadAvailableVibes();
+
 		// Listen for unified toolCall events
 		const handleToolCallEvent = (event: Event) => {
 			const customEvent = event as CustomEvent;
@@ -164,30 +301,104 @@
 
 <div class="relative min-h-screen bg-glass-gradient px-4 pt-[env(safe-area-inset-top)] pb-[calc(6rem+env(safe-area-inset-bottom))] flex flex-col" bind:this={streamContainer}>
 	
-	<!-- Header -->
-	<div class="pt-8 pb-6 text-center">
-		<h1 class="text-2xl font-bold tracking-tight text-slate-900/80">Hominio Activity</h1>
-		<p class="text-xs font-medium text-slate-500 uppercase tracking-widest mt-1">Live Stream</p>
-	</div>
-
 	<!-- Activity Stream -->
-	<div class="flex-1 w-full max-w-3xl mx-auto flex flex-col gap-4 justify-end min-h-[50vh]">
+	<div class="flex-1 w-full max-w-3xl mx-auto flex flex-col gap-4 min-h-[50vh] md:px-6 lg:px-8" class:justify-end={activities.length > 0}>
 		{#if activities.length === 0}
-			<div class="flex flex-col items-center justify-center py-20 text-slate-400/50">
-				<div class="mb-4 p-4 rounded-full bg-white/20 backdrop-blur-sm">
-					<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+			{#if vibesLoading}
+				<div class="flex flex-col items-center justify-center py-20 text-slate-400/50">
+					<LoadingSpinner />
+					<p class="text-sm mt-4">Loading available vibes...</p>
 				</div>
-				<p class="text-sm">Waiting for activity...</p>
-				<p class="text-xs mt-2">Ask Hominio to do something</p>
-			</div>
+			{:else if availableVibes.length > 0}
+				<!-- Empty State: Instructions & Available Vibes -->
+				<div class="flex flex-col gap-6 md:gap-8">
+					<!-- Instructions Header -->
+					<div class="text-center space-y-3 md:space-y-4">
+						<h1 class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900/80">Willkommen bei Hominio</h1>
+						<p class="text-sm md:text-base text-slate-600 max-w-2xl mx-auto">
+							Starte einfach zu sprechen, um Hominio zu nutzen. Du kannst natürlich fragen oder direkt Aufgaben stellen.
+						</p>
+						
+						<!-- Examples -->
+						<div class="mt-6 space-y-2">
+							<p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Beispiele:</p>
+							<div class="flex flex-wrap justify-center gap-2 text-xs md:text-sm">
+								<span class="px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-full text-slate-700 border border-slate-200/50">"Zeig mir das Menü"</span>
+								<span class="px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-full text-slate-700 border border-slate-200/50">"Erstelle einen Termin morgen um 14 Uhr"</span>
+								<span class="px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-full text-slate-700 border border-slate-200/50">"Welche Wellness-Angebote gibt es?"</span>
+							</div>
+						</div>
+					</div>
+
+					<!-- Available Vibes Grid - Compact -->
+					<div class="space-y-3 md:space-y-4">
+						<p class="text-xs font-semibold text-slate-500 uppercase tracking-wide text-center">Active Vibes</p>
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+						{#each availableVibes as vibe (vibe.id)}
+							<GlassCard lifted={true} class="overflow-hidden relative p-3 md:p-4">
+								<!-- Gradient Background -->
+								<div class="absolute inset-0 bg-gradient-to-br from-secondary-400 to-secondary-500 opacity-5"></div>
+								
+								<!-- Compact Layout -->
+								<div class="flex relative items-center gap-3">
+									<!-- Avatar -->
+									<img 
+										src={vibe.avatar} 
+										alt={vibe.name}
+										class="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover flex-shrink-0"
+									/>
+									
+									<!-- Content -->
+									<div class="flex-1 min-w-0">
+										<div class="flex items-center gap-2 mb-1">
+											<h3 class="text-sm md:text-base font-bold text-slate-900">
+												{vibe.name}
+											</h3>
+											<span class="text-[10px] md:text-xs px-1.5 py-0.5 rounded-full bg-gradient-to-r from-secondary-400 to-secondary-500 text-white font-semibold">
+												{vibe.role}
+											</span>
+										</div>
+										<p class="text-xs text-slate-600 line-clamp-2">
+											{vibe.description}
+										</p>
+									</div>
+								</div>
+							</GlassCard>
+						{/each}
+						</div>
+					</div>
+				</div>
+			{:else}
+				<div class="flex flex-col items-center justify-center py-20 text-slate-400/50">
+					<div class="mb-4 p-4 rounded-full bg-white/20 backdrop-blur-sm">
+						<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+					</div>
+					<p class="text-sm">Waiting for activity...</p>
+					<p class="text-xs mt-2">Ask Hominio to do something</p>
+				</div>
+			{/if}
 		{:else}
+			<!-- Header (only shown when activities exist) -->
+			<div class="pt-4 pb-4 text-center">
+				<h1 class="text-2xl font-bold tracking-tight text-slate-900/80">Activity Stream</h1>
+				<p class="text-xs font-medium text-slate-500 uppercase tracking-widest mt-1">Live Stream</p>
+			</div>
+			
             <!-- Render items in chronological order (newest at bottom) -->
-			{#each activities as item (item.id)}
-				<ActivityStreamItem 
-					item={item} 
-					isExpanded={item.isExpanded}
-                    onToggle={() => toggleItem(item.id)}
-				/>
+			{#each activities as item, index (item.id)}
+				<div 
+					bind:this={elementRefs[item.id]}
+					class="transition-all duration-500 ease-in-out"
+					class:opacity-0={itemsPushingOut.has(item.id)}
+					class:-translate-y-8={itemsPushingOut.has(item.id)}
+					class:pointer-events-none={itemsPushingOut.has(item.id)}
+				>
+					<ActivityStreamItem 
+						item={item} 
+						isExpanded={item.isExpanded}
+						onToggle={() => toggleItem(item.id)}
+					/>
+				</div>
 			{/each}
 		{/if}
 	</div>

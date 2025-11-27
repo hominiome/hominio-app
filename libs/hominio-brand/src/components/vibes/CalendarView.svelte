@@ -5,7 +5,7 @@
 -->
 <script>
 	import { GlassCard } from '@hominio/brand';
-	import { calendarEntries } from './calendar-store.js';
+	import { calendarEntries } from '@hominio/vibes';
 	
 	let { data, onClose } = $props();
 	
@@ -510,3 +510,4 @@
 		}
 	}
 </style>
+
