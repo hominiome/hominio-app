@@ -457,7 +457,7 @@
 			{#each activities as item, index (item.id)}
 				<div 
 					bind:this={elementRefs[item.id]}
-					class="transition-all duration-500 ease-in-out"
+					class="transition-all duration-500 ease-in-out mb-6"
 					class:opacity-0={itemsPushingOut.has(item.id)}
 					class:-translate-y-8={itemsPushingOut.has(item.id)}
 					class:pointer-events-none={itemsPushingOut.has(item.id)}

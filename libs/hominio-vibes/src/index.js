@@ -57,6 +57,6 @@ export {
 // Export UI components
 export { default as MenuView } from './components/MenuView.svelte';
 export { default as WellnessView } from './components/WellnessView.svelte';
-export { default as CalendarView } from './components/CalendarView.svelte';
-export { default as CalendarEntryView } from './components/CalendarEntryView.svelte';
+// Calendar views are now in @hominio/brand/views - re-export for compatibility
+export { CalendarView, CalendarEntryView } from '@hominio/brand/views';
 

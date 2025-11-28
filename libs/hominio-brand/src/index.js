@@ -6,6 +6,9 @@
 // Export components
 export * from './components/index.js';
 
+// Export views (pure presentation components)
+export * from './views/index.js';
+
 // Export utilities
 export * from './utilities/index.js';
 

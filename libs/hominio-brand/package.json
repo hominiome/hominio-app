@@ -9,6 +9,7 @@
 		"./app.css": "./src/app.css",
 		"./tailwind.config.js": "./tailwind.config.js",
 		"./components": "./src/components/index.js",
+		"./views": "./src/views/index.js",
 		"./tokens": "./src/tokens/index.js",
 		"./utilities": "./src/utilities/index.js",
 		"./legal/privacy-policy": "./src/legal/privacy-policy/+page.svelte",

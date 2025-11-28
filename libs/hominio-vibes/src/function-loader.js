@@ -16,8 +16,8 @@ import * as viewCalendarModule from '../lib/functions/view-calendar.js';
 // Import UI components from local components
 import MenuView from './components/MenuView.svelte';
 import WellnessView from './components/WellnessView.svelte';
-import CalendarView from './components/CalendarView.svelte';
-import CalendarEntryView from './components/CalendarEntryView.svelte';
+// Import calendar views from @hominio/brand (pure views)
+import { CalendarView, CalendarEntryView } from '@hominio/brand/views';
 
 const functionModules = {
 	'show-menu': showMenuModule,
