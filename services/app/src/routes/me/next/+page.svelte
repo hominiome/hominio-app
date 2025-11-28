@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createVoiceCallNextService } from '@hominio/brand';
+    import { createVoiceCallNextService } from '$lib/voice-next';
     
     const voice = createVoiceCallNextService();
 </script>
