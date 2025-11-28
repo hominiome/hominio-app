@@ -194,12 +194,16 @@ export async function createVoiceSessionManager(
 			onLog
 		});
 
-		// Inject repeated prompt after tool call
-		try {
-			const repeatedPrompt = await buildRepeatedPrompt();
-			await contextInjection.injectRepeatedPrompt(repeatedPrompt);
-		} catch (err) {
-			console.error('[hominio-voice] Failed to inject repeated prompt:', err);
+		// Only inject repeated prompt after actionSkill calls (not after query calls)
+		// Query calls (queryVibeContext, queryDataContext) are background operations
+		// that shouldn't trigger AI responses - only actionSkill needs a response
+		if (name === 'actionSkill') {
+			try {
+				const repeatedPrompt = await buildRepeatedPrompt();
+				await contextInjection.injectRepeatedPrompt(repeatedPrompt);
+			} catch (err) {
+				console.error('[hominio-voice] Failed to inject repeated prompt:', err);
+			}
 		}
 
 		// Notify frontend of tool call
