@@ -1,3 +1,21 @@
+# [0.15.0](https://github.com/hominiome/hominio/compare/v0.14.1...v0.15.0) (2025-11-28)
+
+
+### Bug Fixes
+
+* add game service to dev script on port 4205 and remove unused CSS selectors ([adb2505](https://github.com/hominiome/hominio/commit/adb250593ae67dce95065ba9851d0d61983b1761))
+* ensure audio playback reliability by sequencing mixed message types ([704f866](https://github.com/hominiome/hominio/commit/704f8664b1cc577fce7ee4f0edc91439d6222ff1))
+* move vibes UI components back to hominio-vibes package and refactor to use Tailwind ([0a580f7](https://github.com/hominiome/hominio/commit/0a580f7539d73f3175f8a324c6f390daa59777d1))
+* respect callback origin in auth redirect and add game service support ([839158f](https://github.com/hominiome/hominio/commit/839158f827caf648be3fbe2e844ec10bb5fb3510))
+
+
+### Features
+
+* add authentication check and redirect to game service ([f84b3d0](https://github.com/hominiome/hominio/commit/f84b3d04567e9bc33eae4fcea9d16f4d10f942aa))
+* add basic minecraft-like first person controls and scene to game service ([887316c](https://github.com/hominiome/hominio/commit/887316ca769ad71ef5cb54f6b393391520fe1cee))
+* **game:** enhance terrain textures and generation logic ([e326f0c](https://github.com/hominiome/hominio/commit/e326f0c647bf3602e618fda578b757753cdb8239))
+* replace trees with mango trees in milestone 1 and improve asset loading ([69cac64](https://github.com/hominiome/hominio/commit/69cac6429e7382b7453e18ab040bba0830689c7b))
+
 ## [0.14.1](https://github.com/hominiome/hominio/compare/v0.14.0...v0.14.1) (2025-11-22)
 
 
