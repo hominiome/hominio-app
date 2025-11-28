@@ -13,6 +13,7 @@ COPY libs/hominio-auth/ /temp/dev/libs/hominio-auth/
 COPY libs/hominio-caps/ /temp/dev/libs/hominio-caps/
 COPY libs/hominio-brand/ /temp/dev/libs/hominio-brand/
 COPY libs/hominio-voice/ /temp/dev/libs/hominio-voice/
+COPY libs/hominio-vibes/ /temp/dev/libs/hominio-vibes/
 RUN cd /temp/dev && bun install --ignore-scripts
 
 # Build the app
