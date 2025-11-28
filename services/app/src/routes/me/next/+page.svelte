@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { createVoiceCallNextService } from '$lib/voice-next';
+    import { createVoiceCallNextService } from '@hominio/voice';
     
     const voice = createVoiceCallNextService();
 </script>
 
-<div class="p-8 max-w-2xl mx-auto space-y-8">
+<div class="p-8 mx-auto space-y-8 max-w-2xl">
     <h1 class="text-3xl font-bold text-black dark:text-white">Voice Next - Minimal Test</h1>
     
     <div class="flex gap-4">
@@ -28,15 +28,15 @@
     <div class="grid grid-cols-3 gap-4 text-center">
         <div class="p-4 bg-gray-100 rounded-lg dark:bg-gray-800">
             <div class="text-sm text-gray-500">Connection</div>
-            <div class="text-lg font-mono" class:text-green-600={voice.isConnected}>{voice.isConnected ? 'CONNECTED' : 'DISCONNECTED'}</div>
+            <div class="font-mono text-lg" class:text-green-600={voice.isConnected}>{voice.isConnected ? 'CONNECTED' : 'DISCONNECTED'}</div>
         </div>
         <div class="p-4 bg-gray-100 rounded-lg dark:bg-gray-800">
             <div class="text-sm text-gray-500">Mic</div>
-            <div class="text-lg font-mono" class:text-red-600={voice.isRecording}>{voice.isRecording ? 'RECORDING' : 'OFF'}</div>
+            <div class="font-mono text-lg" class:text-red-600={voice.isRecording}>{voice.isRecording ? 'RECORDING' : 'OFF'}</div>
         </div>
         <div class="p-4 bg-gray-100 rounded-lg dark:bg-gray-800">
             <div class="text-sm text-gray-500">AI Status</div>
-            <div class="text-lg font-mono font-bold" 
+            <div class="font-mono text-lg font-bold" 
                  class:text-blue-600={voice.isSpeaking}
                  class:text-purple-600={voice.isThinking}
                  class:text-gray-500={!voice.isSpeaking && !voice.isThinking}>
@@ -53,7 +53,7 @@
         </div>
     </div>
 
-    <div class="bg-black text-green-400 p-4 rounded-lg font-mono text-sm h-96 overflow-y-auto">
+    <div class="overflow-y-auto p-4 h-96 font-mono text-sm text-green-400 bg-black rounded-lg">
         {#each voice.logs as log}
             <div>{log}</div>
         {/each}

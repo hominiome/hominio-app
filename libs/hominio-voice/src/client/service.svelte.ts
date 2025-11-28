@@ -1,5 +1,5 @@
 /**
- * Voice Call Next Service
+ * Voice Call Next Service (Client)
  * Minimal voice call service for the next-generation voice API
  */
 
@@ -49,6 +49,15 @@ export function createVoiceCallNextService() {
             ws.onmessage = async (e) => {
                 const msg = JSON.parse(e.data);
                 if (msg.type === 'status') log(`Status: ${msg.status}`);
+                if (msg.type === 'log') {
+                    // Handle context injection logs
+                    let logMsg = msg.message;
+                    if (msg.context) {
+                        const preview = msg.context.substring(0, 200);
+                        logMsg += `\n   Context preview: ${preview}${msg.context.length > 200 ? '...' : ''}`;
+                    }
+                    log(logMsg);
+                }
                 if (msg.type === 'transcript') {
                     log(`${msg.role === 'user' ? '👤' : '🤖'} ${msg.text}`);
                     if (msg.role === 'user') {
@@ -60,6 +69,10 @@ export function createVoiceCallNextService() {
                 }
                 if (msg.type === 'toolCall') {
                     log(`🔧 Tool Call: ${msg.name} ${JSON.stringify(msg.args)}`);
+                    if (msg.contextString) {
+                        const preview = msg.contextString.substring(0, 200);
+                        log(`   Context: ${preview}${msg.contextString.length > 200 ? '...' : ''}`);
+                    }
                     isThinking = true;
                 }
                 if (msg.type === 'toolResult') {
