@@ -6,17 +6,7 @@
 <script lang="ts">
 	import { GlassCard } from '@hominio/brand';
 
-	/**
-	 * Calendar Entry Data Interface
-	 */
-	export interface CalendarEntry {
-		id: string;
-		date: string; // YYYY-MM-DD format
-		time: string; // HH:MM format
-		duration: number; // Duration in minutes
-		title: string;
-		description?: string;
-	}
+	import type { CalendarEntry } from './types.js';
 
 	/**
 	 * Calendar View Props
