@@ -45,8 +45,8 @@
 
 
 <div>
-	<div class="flex items-center justify-center mb-6">
-		<h2 class="text-xl sm:text-2xl font-bold text-primary-800 text-center">Wellness & Spa</h2>
+	<div class="flex items-center justify-center mb-8">
+		<h2 class="text-2xl sm:text-3xl font-extrabold bg-gradient-to-br from-secondary-400 to-secondary-500 bg-clip-text text-transparent tracking-tight text-center">Wellness & Spa</h2>
 	</div>
 	
 	{#if category === 'all'}
@@ -54,19 +54,19 @@
 		{#each categories as cat}
 			{#if wellness[cat.id] && wellness[cat.id].length > 0}
 				<div class="mb-8">
-					<h3 class="mb-4 text-lg sm:text-xl font-bold text-primary-700 text-center">
+					<h3 class="mb-4 text-lg sm:text-xl font-bold text-secondary-500 text-center">
 						{cat.name}
 					</h3>
 					<div class="grid grid-cols-1 gap-3 sm:gap-4">
 						{#each wellness[cat.id] as item}
 							<GlassCard lifted={true} class="p-0 overflow-hidden flex items-stretch">
 								<div class="flex-1 p-3 sm:p-4 min-w-0 flex-shrink">
-									<h4 class="text-sm sm:text-base font-semibold text-primary-800 mb-1 sm:mb-2">{item.name}</h4>
+									<h4 class="text-sm sm:text-base font-semibold text-slate-800 mb-1 sm:mb-2">{item.name}</h4>
 									{#if item.description}
-										<p class="text-xs sm:text-sm text-primary-600 mb-1">{item.description}</p>
+										<p class="text-xs sm:text-sm text-slate-600 mb-1">{item.description}</p>
 									{/if}
 									{#if item.duration}
-										<p class="text-xs sm:text-sm text-primary-500 italic">{item.duration}</p>
+										<p class="text-xs sm:text-sm text-slate-500 italic">{item.duration}</p>
 									{/if}
 								</div>
 								<div class="w-[100px] sm:w-[140px] min-w-[100px] sm:min-w-[140px] max-w-[100px] sm:max-w-[140px] bg-secondary-500 text-secondary-50 px-3 sm:px-6 py-3 sm:py-4 flex flex-col items-end justify-center flex-shrink-0 box-border">
@@ -85,19 +85,19 @@
 		<!-- Show single category -->
 		{#if wellness[category] && wellness[category].length > 0}
 			<div>
-				<h3 class="mb-4 text-lg sm:text-xl font-bold text-primary-700 text-center">
+				<h3 class="mb-4 text-lg sm:text-xl font-bold text-secondary-500 text-center">
 					{categories.find(c => c.id === category)?.name || category}
 				</h3>
 				<div class="grid grid-cols-1 gap-3 sm:gap-4">
 					{#each wellness[category] as item}
 						<GlassCard lifted={true} class="p-0 overflow-hidden flex items-stretch">
 							<div class="flex-1 p-3 sm:p-4 min-w-0 flex-shrink">
-								<h4 class="text-sm sm:text-base font-semibold text-primary-800 mb-1 sm:mb-2">{item.name}</h4>
+								<h4 class="text-sm sm:text-base font-semibold text-slate-800 mb-1 sm:mb-2">{item.name}</h4>
 								{#if item.description}
-									<p class="text-xs sm:text-sm text-primary-600 mb-1">{item.description}</p>
+									<p class="text-xs sm:text-sm text-slate-600 mb-1">{item.description}</p>
 								{/if}
 								{#if item.duration}
-									<p class="text-xs sm:text-sm text-primary-500 italic">{item.duration}</p>
+									<p class="text-xs sm:text-sm text-slate-500 italic">{item.duration}</p>
 								{/if}
 							</div>
 							<div class="w-[100px] sm:w-[140px] min-w-[100px] sm:min-w-[140px] max-w-[100px] sm:max-w-[140px] bg-secondary-500 text-secondary-50 px-3 sm:px-6 py-3 sm:py-4 flex flex-col items-end justify-center flex-shrink-0 box-border">
@@ -111,7 +111,7 @@
 				</div>
 			</div>
 		{:else}
-			<div class="text-center py-8 text-primary-500">
+			<div class="text-center py-8 text-slate-500">
 				Keine Dienstleistungen in dieser Kategorie gefunden.
 			</div>
 		{/if}

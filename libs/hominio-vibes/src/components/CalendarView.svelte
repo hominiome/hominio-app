@@ -138,7 +138,7 @@
 				<div class="w-full relative">
 					<!-- Day Header - Organic, no borders -->
 					<div class="flex items-center justify-between mb-6">
-						<h3 class="text-2xl font-bold {isToday ? 'text-secondary-500' : 'text-primary-800'} m-0 flex items-center gap-3">
+						<h3 class="text-2xl font-bold {isToday ? 'text-secondary-500' : 'text-slate-800'} m-0 flex items-center gap-3">
 							{formatDate(dateObj)}
 							{#if isToday}
 								<span class="text-xs bg-gradient-to-r from-secondary-400 to-secondary-500 text-white px-3 py-1 rounded-full font-bold tracking-wider uppercase shadow-sm">
@@ -147,7 +147,7 @@
 							{/if}
 						</h3>
 						{#if dayEntries.length > 0}
-							<span class="text-sm text-primary-600 font-medium bg-gradient-to-r from-primary-50 to-primary-100/50 px-4 py-1.5 rounded-full shadow-sm">
+							<span class="text-sm text-secondary-600 font-medium bg-gradient-to-r from-secondary-50 to-secondary-100/50 px-4 py-1.5 rounded-full shadow-sm">
 								{dayEntries.length} {dayEntries.length === 1 ? 'Termin' : 'Termine'}
 							</span>
 						{/if}
@@ -160,14 +160,14 @@
 								<div class="flex flex-row items-stretch">
 									<!-- Time Column - Organic styling -->
 									<div class="flex flex-col items-center justify-center py-8 px-6 bg-gradient-to-br from-secondary-500/5 to-secondary-500/10 min-w-[100px]">
-										<span class="text-xl font-bold text-primary-800 leading-none mb-2">{formatTime(entry.time)}</span>
+										<span class="text-xl font-bold text-slate-800 leading-none mb-2">{formatTime(entry.time)}</span>
 										<div class="w-1 h-4 bg-gradient-to-b from-secondary-400/40 to-secondary-500/20 my-2 rounded-full"></div>
-										<span class="text-sm font-semibold text-primary-600">{calculateEndTime(entry.time, entry.duration)}</span>
+										<span class="text-sm font-semibold text-slate-600">{calculateEndTime(entry.time, entry.duration)}</span>
 									</div>
 									
 									<!-- Details Column -->
 									<div class="flex-1 py-6 px-7 flex flex-col justify-center">
-										<h4 class="text-xl font-bold text-primary-800 mb-3 leading-tight">{entry.title}</h4>
+										<h4 class="text-xl font-bold text-slate-800 mb-3 leading-tight">{entry.title}</h4>
 										
 										<div class="flex items-center gap-3 mb-3">
 											<span class="inline-flex items-center gap-2 text-xs text-secondary-600 bg-gradient-to-r from-secondary-500/10 to-secondary-500/5 px-3 py-1.5 rounded-lg font-semibold">
@@ -180,7 +180,7 @@
 										</div>
 										
 										{#if entry.description}
-											<p class="text-sm text-primary-600 leading-relaxed mt-2">{entry.description}</p>
+											<p class="text-sm text-slate-600 leading-relaxed mt-2">{entry.description}</p>
 										{/if}
 									</div>
 								</div>
@@ -206,10 +206,10 @@
 					
 					<!-- Text Content -->
 					<div class="space-y-3">
-						<h3 class="text-2xl font-bold bg-gradient-to-br from-primary-800 to-primary-700 bg-clip-text text-transparent m-0">
+						<h3 class="text-2xl font-bold bg-gradient-to-br from-secondary-400 to-secondary-500 bg-clip-text text-transparent m-0">
 							Keine Termine vorhanden
 						</h3>
-						<p class="text-base text-primary-600/80 m-0 leading-relaxed font-medium">
+						<p class="text-base text-slate-600/80 m-0 leading-relaxed font-medium">
 							Erstelle einen neuen Termin, um zu beginnen.
 						</p>
 					</div>

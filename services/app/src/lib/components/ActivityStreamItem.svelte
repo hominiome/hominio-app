@@ -93,7 +93,7 @@
 
             <!-- Expanded Content -->
             {#if expanded}
-                <div transition:slide={{ duration: 300 }} class="p-0 md:p-6 lg:p-8 bg-slate-50/30">
+                <div transition:slide={{ duration: 300 }} class="p-4 md:p-6 lg:p-8 bg-slate-50/30">
                     {#if item.status === 'pending'}
                         <div class="flex justify-center items-center p-8">
                             <LoadingSpinner />
@@ -104,11 +104,13 @@
                             <p class="text-sm opacity-80">{item.error}</p>
                         </div>
                     {:else if item.result}
-                        <UIRenderer 
-                            functionId={skillId} 
-                            resultData={item.result} 
-                            onClose={() => { expanded = false; }} 
-                        />
+                        <div class="pt-4 pb-2">
+                            <UIRenderer 
+                                functionId={skillId} 
+                                resultData={item.result} 
+                                onClose={() => { expanded = false; }} 
+                            />
+                        </div>
                     {:else}
                         <div class="p-6 text-sm italic text-center text-slate-500">
                             No output data available
