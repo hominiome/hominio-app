@@ -29,7 +29,8 @@ COPY services/app/ .
 RUN node libs/hominio-brand/scripts/sync-assets.js
 # Run svelte-kit sync before build to generate .svelte-kit directory
 # Use bunx to run svelte-kit sync (Bun's equivalent of npx)
-RUN cd /app && bunx svelte-kit sync
+# Allow graceful failure - if sync fails, build may still succeed if .svelte-kit already exists
+RUN cd /app && bunx svelte-kit sync || echo "Warning: svelte-kit sync failed, continuing build..."
 RUN cd /app && bun run build
 
 # Production image
