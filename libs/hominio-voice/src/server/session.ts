@@ -4,7 +4,7 @@
  */
 
 import { GoogleGenAI, Modality } from '@google/genai';
-import { buildSystemInstruction, buildRepeatedPrompt } from '@hominio/vibes';
+import { buildSystemInstruction } from '@hominio/vibes';
 import { ToolRegistry } from './tools/registry.js';
 import { ContextInjectionService } from './context-injection.js';
 
@@ -195,47 +195,8 @@ export async function createVoiceSessionManager(
 			onLog
 		});
 
-		// Inject repeated prompt to continue the conversation flow
-		// After queryDataContext: Inject ONLY for calendar schema (Karl's workflow: queryDataContext → actionSkill)
-		//   - For menu/wellness schemas (Charles' workflow: actionSkill → queryDataContext), DON'T inject
-		// After actionSkill: only inject if NOT a view/mutation operation (view/mutation operations show UI and should complete naturally)
-		// After queryVibeContext: don't inject (background operation, no follow-up needed)
-		if (name === 'queryDataContext') {
-			// Only inject repeated prompt for calendar schema (Karl's workflow)
-			// Karl uses queryDataContext BEFORE actionSkill, so we need to nudge continuation
-			// Charles uses actionSkill BEFORE queryDataContext, so we don't want premature responses
-			const schemaId = args?.schemaId || '';
-			if (schemaId === 'calendar') {
-				try {
-					const repeatedPrompt = await buildRepeatedPrompt();
-					await contextInjection.injectRepeatedPrompt(repeatedPrompt);
-				} catch (err) {
-					console.error('[hominio-voice] Failed to inject repeated prompt:', err);
-				}
-			}
-		} else if (name === 'actionSkill') {
-			// Only inject repeated prompt for operations that don't show UI or success confirmations
-			// View operations (show-menu, show-wellness, view-calendar) show UI and should complete naturally
-			// Mutation operations (create/edit/delete) show success views and should complete naturally
-			const skillId = args?.skillId || '';
-			const isViewOperation = 
-				skillId.includes('show') || skillId.includes('Show') ||
-				skillId.includes('view') || skillId.includes('View');
-			const isMutationOperation = 
-				skillId.includes('create') || skillId.includes('Create') ||
-				skillId.includes('edit') || skillId.includes('Edit') ||
-				skillId.includes('delete') || skillId.includes('Delete');
-			
-			// Only inject repeated prompt for operations that don't show UI or success views
-			if (!isViewOperation && !isMutationOperation) {
-				try {
-					const repeatedPrompt = await buildRepeatedPrompt();
-					await contextInjection.injectRepeatedPrompt(repeatedPrompt);
-				} catch (err) {
-					console.error('[hominio-voice] Failed to inject repeated prompt:', err);
-				}
-			}
-		}
+		// Repeated prompt is already included in the initial system instruction
+		// No need to inject it after tool calls - it's available throughout the conversation
 
 		// Notify frontend of tool call
 		onToolCall?.(name, args || {}, toolResult.result, toolResult.contextString);
