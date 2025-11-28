@@ -1,3 +1,11 @@
+## [0.16.4](https://github.com/hominiome/hominio/compare/v0.16.3...v0.16.4) (2025-11-28)
+
+
+### Bug Fixes
+
+* resolve circular dependencies in hominio-brand ([bccdf5a](https://github.com/hominiome/hominio/commit/bccdf5a0216a381726d247f5b85fad287c25d71a))
+* resolve tool call order conflicts and refresh date/time ([26481e5](https://github.com/hominiome/hominio/commit/26481e5d9628ba723a2e81a66842739dc84515dd))
+
 ## [0.16.3](https://github.com/hominiome/hominio/compare/v0.16.2...v0.16.3) (2025-11-28)
 
 
