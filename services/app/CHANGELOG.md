@@ -1,3 +1,15 @@
+## [0.15.2](https://github.com/hominiome/hominio/compare/v0.15.1...v0.15.2) (2025-11-28)
+
+
+### Bug Fixes
+
+* correct ActivityStreamItem state initialization to avoid Svelte warning ([ac4c616](https://github.com/hominiome/hominio/commit/ac4c6163d24763d2817d67a0a7ba3b14e81fd573))
+* improve Charles vibe prompt to proactively use filters for menu and wellness ([4cc90f1](https://github.com/hominiome/hominio/commit/4cc90f1e9af4eb23c1c5cd991fcd43a4ec0b566e))
+* improve UI spacing and styling for calendar, menu, and wellness components ([0ed9e0d](https://github.com/hominiome/hominio/commit/0ed9e0d26aaa6d2bc8fabd3f1c81321754590855))
+* prevent duplicate AI responses and remove admin/logs view ([4e2e026](https://github.com/hominiome/hominio/commit/4e2e02682b7c0b02fe79ab309de9820a249971af))
+* resolve deployment pipeline errors for app and wallet services ([0df1c21](https://github.com/hominiome/hominio/commit/0df1c214fad8cb64897bb595e6041be089dbc697))
+* resolve voice session flow and API deployment issues ([fc93e95](https://github.com/hominiome/hominio/commit/fc93e95adf7a55d4416e00c153e3f821629bbf11))
+
 ## [0.15.1](https://github.com/hominiome/hominio/compare/v0.15.0...v0.15.1) (2025-11-28)
 
 
