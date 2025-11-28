@@ -60,11 +60,15 @@ export class ContextInjectionService {
 	}
 
 	async injectVibeContext(vibeId: string, contextString: string): Promise<boolean> {
+		// Use turnComplete: false to keep turn open - queryVibeContext is background operation
+		// No follow-up needed, so we can mark complete, but typically no response expected
 		return this.injectContext(contextString, true, `vibe context (${vibeId})`);
 	}
 
 	async injectDataContext(schemaId: string, contextString: string): Promise<boolean> {
-		return this.injectContext(contextString, true, `data context (${schemaId})`);
+		// Use turnComplete: false to keep turn open - queryDataContext is followed by actionSkill
+		// We don't want the AI to respond after context injection, only after actionSkill
+		return this.injectContext(contextString, false, `data context (${schemaId})`);
 	}
 
 	async injectRepeatedPrompt(repeatedPrompt: string): Promise<boolean> {
