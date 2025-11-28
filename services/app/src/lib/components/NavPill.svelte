@@ -2,7 +2,8 @@
     import { goto } from '$app/navigation';
     import { page } from '$app/stores';
     import { createAuthClient } from '@hominio/auth';
-    import { NavPill, createVoiceCallService } from '@hominio/brand';
+    import { NavPill } from '@hominio/brand';
+    import { createVoiceCallService } from '@hominio/voice';
     import type { Capability } from '@hominio/caps';
 
 	const authClient = createAuthClient();
@@ -33,7 +34,9 @@
 			// Dynamically load vibe config to get avatar
 			import('@hominio/vibes').then(({ loadVibeConfig }) => {
 				loadVibeConfig(currentVibeId).then((config) => {
-					vibeAvatar = config.avatar || null;
+					// Avatar is in config files but not in TypeScript type definition
+					const configWithAvatar = config as any;
+					vibeAvatar = configWithAvatar.avatar || null;
 				}).catch((err) => {
 					console.warn('[NavPill] Failed to load vibe config for avatar:', err);
 					vibeAvatar = null;
@@ -44,22 +47,15 @@
 		}
 	});
 
-	// Initialize voice call service with tool call handler
-	const voiceCall = createVoiceCallService({
-		onToolCall: async (toolName: string, args: any, contextString?: string, result?: any) => {
-			console.log('[NavPill] 🔧 Tool call handler called:', { toolName, args, contextString, result });
-			
-			// Dispatch generic toolCall event for activity stream with contextString and result
-			const toolCallEvent = new CustomEvent('toolCall', {
-				detail: {
-					toolName,
-					args,
-					contextString,
-					result,
-					timestamp: Date.now()
-				}
-			});
-			window.dispatchEvent(toolCallEvent);
+	// Initialize voice call service
+	const voiceCall = createVoiceCallService();
+
+	// Listen for tool call events from voice service
+	$effect(() => {
+		const handleToolCall = (event: Event) => {
+			const customEvent = event as CustomEvent;
+			const { toolName, args, contextString, result } = customEvent.detail;
+			console.log('[NavPill] 🔧 Tool call received:', { toolName, args, contextString, result });
 
 			if (toolName === 'queryVibeContext') {
 				// Background query - vibe context queries don't require UI navigation
@@ -102,7 +98,12 @@
 			} else {
 				console.log('[NavPill] ⚠️ Unknown tool name:', toolName);
 			}
-		}
+		};
+
+		window.addEventListener('toolCall', handleToolCall);
+		return () => {
+			window.removeEventListener('toolCall', handleToolCall);
+		};
 	});
 
 	function goHome() {
@@ -272,7 +273,7 @@
 		}
 
 		// Pass current vibe ID when starting call (reactive)
-		await voiceCall.startCall(currentVibeId);
+		await voiceCall.start(currentVibeId);
 	}
 
 	async function handleRequestAccess() {
@@ -343,7 +344,7 @@
 	}
 
 	async function handleStopCall() {
-		voiceCall.endCall();
+		voiceCall.stop();
 	}
 
 	// Ensure authentication state is properly reactive
@@ -360,7 +361,7 @@
 		const handleContextUpdate = (event: Event) => {
 			const customEvent = event as CustomEvent;
 			const { text } = customEvent.detail;
-			if (text && voiceCall.isCallActive) {
+			if (text && voiceCall.isConnected) {
 				console.log('[NavPill] Sending context update to voice session');
 				voiceCall.sendTextMessage(`[System] Updated context: ${text}`);
 			}
@@ -378,10 +379,10 @@
 	
 	$effect(() => {
 		// Track if call was active
-		if (voiceCall.isCallActive || voiceCall.status === 'connected') {
+		if (voiceCall.isConnected) {
 			wasCallActive = true;
 		} else {
-			// Reset flag when call ends (both isCallActive and status are inactive)
+			// Reset flag when call ends
 			wasCallActive = false;
 		}
 	});
@@ -422,6 +423,14 @@
 			voiceCall.cleanup();
 		};
 	});
+
+	// Derive AI state from voice service
+	const aiState = $derived.by(() => {
+		if (voiceCall.isSpeaking) return 'speaking';
+		if (voiceCall.isThinking) return 'thinking';
+		if (voiceCall.isConnected) return 'listening';
+		return 'idle';
+	});
 </script>
 
 <NavPill 
@@ -431,10 +440,10 @@
 	isAuthenticated={isAuthenticated}
 	signingOut={signingOut}
 	user={user}
-	isCallActive={voiceCall.isCallActive}
-	isConnecting={voiceCall.isConnecting}
-	isWaitingForPermission={voiceCall.isWaitingForPermission}
-	aiState={voiceCall.aiState}
+	isCallActive={voiceCall.isConnected}
+	isConnecting={false}
+	isWaitingForPermission={false}
+	aiState={aiState}
 	onStartCall={handleStartCall}
 	onStopCall={handleStopCall}
 	showCapabilityModal={showCapabilityModal}

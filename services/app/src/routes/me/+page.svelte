@@ -192,6 +192,13 @@
 		}
 	}
 
+	// Handle log messages from voice service
+	function handleVoiceLog(message: string, context?: string) {
+		// Log messages are for context injection display
+		// They can be shown in the activity stream if needed
+		console.log('[Me] Voice log:', message, context ? `(context: ${context.substring(0, 100)}...)` : '');
+	}
+
 	function updateActivityStatus(id: string, status: 'success' | 'error', result?: any, error?: string) {
 		activities = activities.map(item => {
 			if (item.id === id) {
@@ -306,14 +313,22 @@
 		// Load available vibes
 		loadAvailableVibes();
 
-		// Listen for unified toolCall events
+		// Listen for unified toolCall events from voice service
 		const handleToolCallEvent = (event: Event) => {
 			const customEvent = event as CustomEvent;
 			const { toolName, args, contextString, result } = customEvent.detail;
 			handleToolCall(toolName, args, contextString, result);
 		};
 
+		// Listen for log events from voice service
+		const handleVoiceLogEvent = (event: Event) => {
+			const customEvent = event as CustomEvent;
+			const { message, context } = customEvent.detail;
+			handleVoiceLog(message, context);
+		};
+
 		window.addEventListener('toolCall', handleToolCallEvent);
+		window.addEventListener('voiceLog', handleVoiceLogEvent);
 
 		// Check for pending actionSkill from sessionStorage (legacy support for navigation)
 		const checkPendingActionSkill = async () => {
@@ -334,6 +349,7 @@
 
 		return () => {
 			window.removeEventListener('toolCall', handleToolCallEvent);
+			window.removeEventListener('voiceLog', handleVoiceLogEvent);
 		};
 	});
 

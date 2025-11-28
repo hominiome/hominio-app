@@ -3,20 +3,23 @@
 	import { createAuthClient } from '@hominio/auth';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { NavPill, createVoiceCallService, Favicon, Footer } from '@hominio/brand';
+	import { NavPill, Favicon, Footer } from '@hominio/brand';
+	import { createVoiceCallService } from '@hominio/voice';
 	
 	let { children } = $props();
 	
 	const authClient = createAuthClient();
 	const session = authClient.useSession();
 	
-	// Initialize voice call service with tool call handler
-	const voiceCall = createVoiceCallService({
-		onToolCall: (toolName, args) => {
-			console.log('[NavPill] Tool call:', toolName, args);
-			// Wallet service doesn't handle agent switching
-			// Could add other tool handlers here if needed
-		}
+	// Initialize voice call service
+	const voiceCall = createVoiceCallService();
+
+	// Derive AI state from voice service
+	const aiState = $derived.by(() => {
+		if (voiceCall.isSpeaking) return 'speaking';
+		if (voiceCall.isThinking) return 'thinking';
+		if (voiceCall.isConnected) return 'listening';
+		return 'idle';
 	});
 
 	$effect(() => {
@@ -58,11 +61,11 @@
 
 	// Voice call handlers - Using actual voice call service
 	async function handleStartCall() {
-		await voiceCall.startCall();
+		await voiceCall.start();
 	}
 
 	async function handleStopCall() {
-		voiceCall.endCall();
+		voiceCall.stop();
 	}
 
 	// Ensure authentication state is properly reactive
@@ -161,6 +164,14 @@
 	$effect(() => {
 		console.log('[NavPill] Auth state changed:', { isAuthenticated, user: user?.name, pillState });
 	});
+
+	// Cleanup voice call service on unmount
+	$effect(() => {
+		return () => {
+			console.log('[Wallet Layout] Cleaning up voice call service');
+			voiceCall.cleanup();
+		};
+	});
 </script>
 
 <Favicon />
@@ -172,10 +183,10 @@
 	isAuthenticated={isAuthenticated}
 	signingOut={signingOut}
 	user={user}
-	isCallActive={voiceCall.isCallActive}
-	isConnecting={voiceCall.isConnecting}
-	isWaitingForPermission={voiceCall.isWaitingForPermission}
-	aiState={voiceCall.aiState}
+	isCallActive={voiceCall.isConnected}
+	isConnecting={false}
+	isWaitingForPermission={false}
+	aiState={aiState}
 	onStartCall={handleStartCall}
 	onStopCall={handleStopCall}
 	pillState={pillState}

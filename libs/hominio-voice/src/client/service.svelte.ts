@@ -1,14 +1,15 @@
 /**
- * Voice Call Next Service (Client)
- * Minimal voice call service for the next-generation voice API
+ * Voice Call Service (Client)
+ * Voice call service for Google Live API integration
  */
 
-export function createVoiceCallNextService() {
+export function createVoiceCallService() {
     let isConnected = $state(false);
     let isRecording = $state(false);
     let isSpeaking = $state(false);
     let isThinking = $state(false);
     let logs = $state<string[]>([]);
+    let error = $state<string | null>(null);
     
     let ws: WebSocket | null = null;
     let audioContext: AudioContext | null = null;
@@ -20,11 +21,11 @@ export function createVoiceCallNextService() {
     let isFirstAudioOfTurn = true;
 
     function log(msg: string) {
-        console.log(`[VoiceNext] ${msg}`);
+        console.log(`[VoiceCall] ${msg}`);
         logs.push(`${new Date().toISOString().split('T')[1].slice(0, -1)} - ${msg}`);
     }
 
-    async function start() {
+    async function start(vibeId?: string) {
         try {
             log('Starting...');
             isFirstAudioOfTurn = true;
@@ -36,8 +37,10 @@ export function createVoiceCallNextService() {
 
             // WebSocket Init
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const host = window.location.hostname === 'localhost' ? 'localhost:4204' : 'api.hominio.me'; // Hardcoded for test
-            const wsUrl = `${protocol}//${host}/api/v0/voice/live-next`;
+            const host = window.location.hostname === 'localhost' ? 'localhost:4204' : 'api.hominio.me';
+            const wsUrl = vibeId 
+                ? `${protocol}//${host}/api/v0/voice/live-next?vibeId=${encodeURIComponent(vibeId)}`
+                : `${protocol}//${host}/api/v0/voice/live-next`;
             
             ws = new WebSocket(wsUrl);
             
@@ -57,6 +60,16 @@ export function createVoiceCallNextService() {
                         logMsg += `\n   Context preview: ${preview}${msg.context.length > 200 ? '...' : ''}`;
                     }
                     log(logMsg);
+                    
+                    // Dispatch log event for activity stream
+                    const logEvent = new CustomEvent('voiceLog', {
+                        detail: {
+                            message: msg.message,
+                            context: msg.context,
+                            timestamp: Date.now()
+                        }
+                    });
+                    window.dispatchEvent(logEvent);
                 }
                 if (msg.type === 'transcript') {
                     log(`${msg.role === 'user' ? '👤' : '🤖'} ${msg.text}`);
@@ -74,6 +87,18 @@ export function createVoiceCallNextService() {
                         log(`   Context: ${preview}${msg.contextString.length > 200 ? '...' : ''}`);
                     }
                     isThinking = true;
+                    
+                    // Dispatch toolCall event for activity stream
+                    const toolCallEvent = new CustomEvent('toolCall', {
+                        detail: {
+                            toolName: msg.name,
+                            args: msg.args,
+                            contextString: msg.contextString,
+                            result: msg.result,
+                            timestamp: Date.now()
+                        }
+                    });
+                    window.dispatchEvent(toolCallEvent);
                 }
                 if (msg.type === 'toolResult') {
                     log(`✅ Tool Result: ${msg.name} ${JSON.stringify(msg.result)}`);
@@ -103,9 +128,25 @@ export function createVoiceCallNextService() {
                 }
             };
 
-            ws.onclose = () => {
+            ws.onerror = (event) => {
+                console.error('[VoiceCall] WebSocket error:', event);
+                error = 'Connection error. Please try again.';
+            };
+
+            ws.onclose = (event) => {
                 log('WebSocket closed');
                 isConnected = false;
+                
+                if (event.code === 1008 || event.reason?.includes('capability') || event.reason?.includes('Forbidden')) {
+                    error = 'Access denied. You need permission to use voice assistant.';
+                } else if (event.code === 1001 || event.reason?.includes('Unauthorized')) {
+                    error = 'Please sign in to use voice assistant.';
+                } else if (event.code !== 1000) {
+                    error = 'Connection error. Please try again.';
+                } else {
+                    error = null;
+                }
+                
                 stop();
             };
 
@@ -151,8 +192,23 @@ export function createVoiceCallNextService() {
             log('Recording started');
 
         } catch (err) {
-            log(`Error: ${err}`);
+            const errorMsg = err instanceof Error ? err.message : 'Failed to start call';
+            log(`Error: ${errorMsg}`);
+            error = errorMsg;
         }
+    }
+
+    function sendTextMessage(text: string, turnComplete: boolean = true) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            console.warn('[VoiceCall] Cannot send text: WebSocket not connected');
+            return;
+        }
+        
+        ws.send(JSON.stringify({
+            type: "text",
+            text,
+            turnComplete
+        }));
     }
 
     async function playAudio(base64: string) {
@@ -212,6 +268,7 @@ export function createVoiceCallNextService() {
         isConnected = false;
         isRecording = false;
         isSpeaking = false;
+        error = null;
         ws = null;
         audioContext = null;
         stream = null;
@@ -220,14 +277,21 @@ export function createVoiceCallNextService() {
         nextStartTime = 0;
     }
 
+    function cleanup() {
+        stop();
+    }
+
     return {
         get isConnected() { return isConnected },
         get isRecording() { return isRecording },
         get isSpeaking() { return isSpeaking },
         get isThinking() { return isThinking },
         get logs() { return logs },
+        get error() { return error },
         start,
-        stop
+        stop,
+        sendTextMessage,
+        cleanup
     };
 }
 

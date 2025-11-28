@@ -78,14 +78,6 @@
 				domains.push('localhost:4204');
 			}
 			
-			if (env.PUBLIC_DOMAIN_GAME) {
-				domains.push(env.PUBLIC_DOMAIN_GAME);
-			} else if (isProduction) {
-				const hostname = window.location.hostname;
-				domains.push(hostname.startsWith('game.') ? hostname : `game.${hostname.replace(/^www\./, '')}`);
-			} else {
-				domains.push('localhost:4205');
-			}
 			
 			const trustedOrigins = domains.map(domain => {
 				// Remove protocol if present

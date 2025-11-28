@@ -23,7 +23,6 @@ const services = [
 	{ name: 'app', filter: 'app', port: 4202 },
 	{ name: 'sync', filter: 'sync', port: 4203 },
 	{ name: 'api', filter: 'api', port: 4204 },
-	{ name: 'game', filter: 'game', port: 4205 },
 ];
 
 // Asset sync watcher (not a service, but runs alongside)
@@ -106,7 +105,7 @@ function startAssetSync() {
  * Kill processes by port (fallback cleanup)
  */
 function killPorts() {
-	const ports = [4200, 4201, 4202, 4203, 4204, 4205, 4848, 4849];
+	const ports = [4200, 4201, 4202, 4203, 4204, 4848, 4849];
 	ports.forEach((port) => {
 		try {
 			const pids = execSync(`lsof -ti:${port}`, { encoding: 'utf8', stdio: 'pipe' }).trim();
@@ -174,7 +173,7 @@ function shutdown(exitCode = 0) {
 		});
 
 		// Final cleanup: kill any processes still holding our ports
-		console.log('[Cleanup] Killing any remaining processes on ports 4200-4205, 4848-4849 (Zero)...');
+		console.log('[Cleanup] Killing any remaining processes on ports 4200-4204, 4848-4849 (Zero)...');
 		killPorts();
 
 		// Exit after cleanup
