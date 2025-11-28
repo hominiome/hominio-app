@@ -1,3 +1,10 @@
+## [0.15.1](https://github.com/hominiome/hominio/compare/v0.15.0...v0.15.1) (2025-11-28)
+
+
+### Bug Fixes
+
+* add call logs sidebar to /me route and fix deployment pipeline ([9f06437](https://github.com/hominiome/hominio/commit/9f0643781ab3ddfc65107ff1620dea2489339ee1))
+
 # [0.15.0](https://github.com/hominiome/hominio/compare/v0.14.1...v0.15.0) (2025-11-28)
 
 
