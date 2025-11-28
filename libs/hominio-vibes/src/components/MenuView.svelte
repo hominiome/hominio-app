@@ -64,10 +64,10 @@
 									<h4 class="mb-1.5 text-base font-bold leading-tight sm:text-lg text-slate-800 sm:mb-2">{item.name}</h4>
 									<p class="text-xs leading-relaxed sm:text-sm text-slate-600">{item.description}</p>
 								</div>
-								<div class="w-[120px] sm:w-[160px] min-w-[120px] sm:min-w-[160px] max-w-[120px] sm:max-w-[160px] bg-secondary-500/20 border-l-2 border-secondary-400/40 px-4 sm:px-6 py-4 sm:py-5 flex flex-col items-end justify-center flex-shrink-0">
-									<div class="mb-1 text-lg font-extrabold text-right whitespace-nowrap sm:text-2xl text-secondary-700">{formatPrice(item.price)}</div>
+								<div class="w-[120px] sm:w-[160px] min-w-[120px] sm:min-w-[160px] max-w-[120px] sm:max-w-[160px] bg-secondary-500 border-l-2 border-secondary-400/40 px-4 sm:px-6 py-4 sm:py-5 flex flex-col items-end justify-center flex-shrink-0">
+									<div class="mb-1 text-lg font-extrabold text-right whitespace-nowrap sm:text-2xl text-white">{formatPrice(item.price)}</div>
 									{#if item.type}
-										<div class="text-[0.7rem] sm:text-xs uppercase tracking-wider text-secondary-600 text-right font-semibold">{item.type}</div>
+										<div class="text-[0.7rem] sm:text-xs uppercase tracking-wider text-white/90 text-right font-semibold">{item.type}</div>
 									{/if}
 								</div>
 							</GlassCard>
@@ -90,10 +90,10 @@
 								<h4 class="mb-1.5 text-base font-bold leading-tight sm:text-lg text-slate-800 sm:mb-2">{item.name}</h4>
 								<p class="text-xs leading-relaxed sm:text-sm text-slate-600">{item.description}</p>
 							</div>
-							<div class="w-[120px] sm:w-[160px] min-w-[120px] sm:min-w-[160px] max-w-[120px] sm:max-w-[160px] bg-secondary-500/20 border-l-2 border-secondary-400/40 px-4 sm:px-6 py-4 sm:py-5 flex flex-col items-end justify-center flex-shrink-0">
-								<div class="mb-1 text-lg font-extrabold text-right whitespace-nowrap sm:text-2xl text-secondary-700">{formatPrice(item.price)}</div>
+							<div class="w-[120px] sm:w-[160px] min-w-[120px] sm:min-w-[160px] max-w-[120px] sm:max-w-[160px] bg-secondary-500 border-l-2 border-secondary-400/40 px-4 sm:px-6 py-4 sm:py-5 flex flex-col items-end justify-center flex-shrink-0">
+								<div class="mb-1 text-lg font-extrabold text-right whitespace-nowrap sm:text-2xl text-white">{formatPrice(item.price)}</div>
 								{#if item.type}
-									<div class="text-[0.7rem] sm:text-xs uppercase tracking-wider text-secondary-600 text-right font-semibold">{item.type}</div>
+									<div class="text-[0.7rem] sm:text-xs uppercase tracking-wider text-white/90 text-right font-semibold">{item.type}</div>
 								{/if}
 							</div>
 						</GlassCard>

@@ -4,7 +4,7 @@
  */
 
 import { GoogleGenAI, Modality } from '@google/genai';
-import { buildSystemInstruction } from '@hominio/vibes';
+import { buildSystemInstruction, buildRepeatedPrompt } from '@hominio/vibes';
 import { ToolRegistry } from './tools/registry.js';
 import { ContextInjectionService } from './context-injection.js';
 
@@ -195,8 +195,16 @@ export async function createVoiceSessionManager(
 			onLog
 		});
 
-		// Repeated prompt is already included in the initial system instruction
-		// No need to inject it after tool calls - it's available throughout the conversation
+		// Inject repeated prompt with fresh date/time after tool calls
+		// This keeps the date/time information current throughout the conversation
+		// The initial system instruction includes it, but we refresh it after tool calls
+		// to ensure the AI always has up-to-date time information
+		try {
+			const repeatedPrompt = await buildRepeatedPrompt();
+			await contextInjection.injectRepeatedPrompt(repeatedPrompt);
+		} catch (err) {
+			console.error('[hominio-voice] Failed to inject repeated prompt:', err);
+		}
 
 		// Notify frontend of tool call
 		onToolCall?.(name, args || {}, toolResult.result, toolResult.contextString);

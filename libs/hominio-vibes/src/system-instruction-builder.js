@@ -48,12 +48,8 @@ export async function buildSystemInstruction(options = {}) {
 	
 	if (availableSchemas.size > 0) {
 		instruction += `\nVerfügbare Datenkontexte für aktive Vibes: ${Array.from(availableSchemas).join(', ')}\n`;
-		instruction += `\nKRITISCH: Wenn der Benutzer nach diesen dynamischen Daten fragt, MUSST du IMMER zuerst queryDataContext aufrufen, bevor du actionSkill verwendest!\n`;
-		instruction += `Beispiele:\n`;
-		instruction += `- Menü/Essen → queryDataContext({ schemaId: "menu" }) → dann actionSkill\n`;
-		instruction += `- Wellness/Spa → queryDataContext({ schemaId: "wellness" }) → dann actionSkill\n`;
-		instruction += `- Kalender/Termine → queryDataContext({ schemaId: "calendar" }) → dann actionSkill\n`;
-		instruction += `\nNutze queryDataContext mit schemaId, um diese Daten abzurufen (z.B. queryDataContext({ schemaId: "menu" })).\n`;
+		instruction += `\nHINWEIS: Die Tool-Aufruffolge hängt vom Schema-Typ ab. Siehe callPrompt für Details.\n`;
+		instruction += `Nutze queryDataContext mit schemaId, um diese Daten abzurufen (z.B. queryDataContext({ schemaId: "menu" })).\n`;
 	}
 
 	// Add active vibe prompts if any
