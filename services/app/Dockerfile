@@ -28,9 +28,11 @@ COPY services/app/ .
 # Sync brand assets to static folder before build
 RUN node libs/hominio-brand/scripts/sync-assets.js
 # Run svelte-kit sync before build to generate .svelte-kit directory
+# This is required because jsconfig.json extends ./.svelte-kit/tsconfig.json
 # Use bunx to run svelte-kit sync (Bun's equivalent of npx)
-# Allow graceful failure - if sync fails, build may still succeed if .svelte-kit already exists
-RUN cd /app && bunx svelte-kit sync || echo "Warning: svelte-kit sync failed, continuing build..."
+# If sync fails, check if .svelte-kit already exists (from cache/previous stage)
+# If not, fail explicitly; if yes, continue with warning
+RUN cd /app && (bunx svelte-kit sync || ([ -d .svelte-kit ] && echo "Warning: svelte-kit sync failed but .svelte-kit exists, continuing..." || (echo "Error: svelte-kit sync failed and .svelte-kit does not exist" && exit 1)))
 RUN cd /app && bun run build
 
 # Production image
